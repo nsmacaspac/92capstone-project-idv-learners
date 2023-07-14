@@ -7,8 +7,6 @@
 
 # we import the dataset
 
-if(!require(tidyverse)) install.packages("tidyverse", repos = "http://cran.us.r-project.org") # require() checks if the package exists
-library(tidyverse)
 options(timeout = 120) # timeout in seconds for some Internet operations
 if(!file.exists("mmc1.xlsx")) download.file("https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8142042/bin/mmc1.xlsx", "mmc1.xlsx")
 
@@ -67,6 +65,8 @@ str(dataset)
 sum(is.na(dataset))
 # [1] 0
 
+if(!require(tidyverse)) install.packages("tidyverse", repos = "http://cran.us.r-project.org") # require() checks if the package exists
+library(tidyverse)
 dataset |>
   group_by(sex) |>
   summarize(n())
@@ -134,7 +134,7 @@ summary(dataset1)
 # 3rd Qu.: 792.2   3rd Qu.:2.000   3rd Qu.: 590.0   3rd Qu.: 873.5
 # Max.   :1056.0   Max.   :2.000   Max.   :1810.0   Max.   :2120.0
 # brna            frna          bweight          fweight
-# Min.   :1.200   Min.   :1.100   Min.   :  4.70   Min.   :  6.00 # the minimum weights are low because of pediatric patients
+# Min.   :1.200   Min.   :1.100   Min.   :  4.70   Min.   :  6.00 # refers to pediatric patients
 # 1st Qu.:3.000   1st Qu.:1.400   1st Qu.: 56.00   1st Qu.: 57.00
 # Median :3.850   Median :1.800   Median : 63.00   Median : 63.00
 # Mean   :3.773   Mean   :2.164   Mean   : 63.66   Mean   : 64.34
@@ -156,32 +156,30 @@ corrplot(cor(dataset1), method = "square", diag = FALSE, addCoef.col = "gray", t
 # response is highly correlated with drug interaction as expected
 
 dataset1 |>
-  ggplot(aes(fcd4, frna)) +
-  geom_point(aes(color = response)) +
-  geom_smooth(color = "tomato4", method = "lm") +
+  ggplot(aes(fcd4, frna, color = response)) +
+  geom_point() +
+  geom_smooth(color = "black", size = 0.5, method = "lm", se = FALSE) +
   xlab("Follow-up CD4 Count") +
   ylab("Follow-up RNA Load") +
-  scale_color_gradient(name = "Response", low = "skyblue", high = "dodgerblue4")
+  scale_color_gradient(name = "Response", low = "skyblue", high = "dodgerblue4") # reverses the color gradient
 # CD4 count and response are negatively correlated with RNA load
 
 dataset1 |>
-  ggplot(aes(fcd4, frna)) +
-  geom_point(aes(color = dinteraction)) +
-  geom_smooth(color = "tomato4", method = "lm") +
+  ggplot(aes(fcd4, frna, color = factor(dinteraction))) +
+  geom_point() +
+  geom_smooth(color = "black", size = 0.5, method = "lm", se = FALSE) +
   xlab("Follow-up CD4 Count") +
   ylab("Follow-up RNA Load") +
-  scale_color_gradient(name = "Drug Interaction", low = "skyblue", high = "dodgerblue4")
+  scale_color_manual(name = "Drug Interaction", values = c("tomato4", "orange3", "yellow3", "green4", "dodgerblue4"))
 # CD4 count and drug interaction are negatively correlated with RNA load
 
 
 
 # we preprocess dataset1
 
-# we keep only CD4 count and RNA load as predictors and response as outcome
-
 dataset1 <- dataset1 |>
-  select(bcd4, fcd4, brna, frna, dinteraction) |>
-  mutate(dinteraction = as.factor(dinteraction))
+  select(bcd4, fcd4, brna, frna, dinteraction) |> # retains CD4 count and RNA load as predictors and dinteraction as outcome
+  mutate(dinteraction = factor(dinteraction))
 head(dataset1)
 # bcd4 fcd4 brna frna dinteraction
 # 1  148  106  3.0  1.3            3
@@ -209,9 +207,9 @@ str(dataset1)
 options(digits = 3)
 if(!require(caret)) install.packages("caret", repos = "http://cran.us.r-project.org")
 library(caret)
-set.seed(20, sample.kind = "Rounding") # if using R 3.6 or later
+set.seed(20, sample.kind = "Rounding") # if using R 3.6 or later # for reproducibility during assessment
 # set.seed(20) # if using R 3.5 or earlier
-test_index <- createDataPartition(dataset1$dinteraction, p = 0.1, list = FALSE)
+test_index <- createDataPartition(dataset1$dinteraction, p = 0.1, list = FALSE) # maximizes the train set
 train_set <- dataset1[-test_index,]
 test_set <- dataset1[test_index,]
 
@@ -219,21 +217,211 @@ test_set <- dataset1[test_index,]
 
 set.seed(30, sample.kind = "Rounding") # if using R 3.6 or later
 # set.seed(30) # if using R 3.5 or earlier
-knn <- train(dinteraction ~ ., data = train_set, method = "knn", tuneGrid = data.frame(k = seq(15, 25, 2)))
+knn <- train(dinteraction ~ ., train_set, method = "knn", tuneGrid = data.frame(k = seq(15, 30, 2)))
 ggplot(knn, highlight = TRUE)
 knn
-knn_dinteraction <- predict(knn, newdata = test_set)
+# k-Nearest Neighbors
+#
+# 948 samples
+# 4 predictor
+# 5 classes: '1', '2', '3', '4', '5'
+#
+# No pre-processing
+# Resampling: Bootstrapped (25 reps)
+# Summary of sample sizes: 948, 948, 948, 948, 948, 948, ...
+# Resampling results across tuning parameters:
+#
+#   k   Accuracy  Kappa
+# 15  0.519     0.300
+# 17  0.527     0.311
+# 19  0.532     0.318
+# 21  0.529     0.313
+# 23  0.523     0.305
+# 25  0.528     0.312
+# 27  0.523     0.304
+# 29  0.522     0.303
+#
+# Accuracy was used to select the optimal model using the largest value.
+# The final value used for the model was k = 19.
+knn_dinteraction <- predict(knn, test_set)
 confusionMatrix(knn_dinteraction, test_set$dinteraction)
+# Confusion Matrix and Statistics
+#
+#           Reference
+# Prediction  1  2  3  4  5
+#          1  0  0  0  0  0
+#          2  1  1  0  0  0
+#          3  2  6 12  3  1
+#          4  0  0 12 25  6
+#          5  0  0  1 15 23
+#
+# Overall Statistics
+#
+# Accuracy : 0.565
+# 95% CI : (0.466, 0.66)
+# No Information Rate : 0.398
+# P-Value [Acc > NIR] : 0.00034
+#
+# Kappa : 0.368
+#
+# Mcnemar's Test P-Value : NA
+#
+# Statistics by Class:
+#
+#                      Class: 1 Class: 2 Class: 3 Class: 4 Class: 5
+# Sensitivity            0.0000  0.14286    0.480    0.581    0.767
+# Specificity            1.0000  0.99010    0.855    0.723    0.795
+# Pos Pred Value            NaN  0.50000    0.500    0.581    0.590
+# Neg Pred Value         0.9722  0.94340    0.845    0.723    0.899
+# Prevalence             0.0278  0.06481    0.231    0.398    0.278
+# Detection Rate         0.0000  0.00926    0.111    0.231    0.213
+# Detection Prevalence   0.0000  0.01852    0.222    0.398    0.361
+# Balanced Accuracy      0.5000  0.56648    0.668    0.652    0.781
 
 
 
 set.seed(40, sample.kind = "Rounding") # if using R 3.6 or later
 # set.seed(40) # if using R 3.5 or earlier
-if(!require(randomForest)) install.packages("randomForest", repos = "http://cran.us.r-project.org")
-library(randomForest)
-rf <- train(dinteraction ~ ., data = train_set, method = "rf", tuneGrid = data.frame(mtry = seq(1:4)))
+rpart <- train(dinteraction ~ ., train_set, method = "rpart", tuneGrid = data.frame(cp = seq(0, 0.1, 0.01)))
+ggplot(rpart, highlight = TRUE)
+rpart
+# CART
+#
+# 948 samples
+# 4 predictor
+# 5 classes: '1', '2', '3', '4', '5'
+#
+# No pre-processing
+# Resampling: Bootstrapped (25 reps)
+# Summary of sample sizes: 948, 948, 948, 948, 948, 948, ...
+# Resampling results across tuning parameters:
+#
+#   cp    Accuracy  Kappa
+# 0.00  0.974     0.963
+# 0.01  0.974     0.963
+# 0.02  0.959     0.941
+# 0.03  0.942     0.917
+# 0.04  0.924     0.891
+# 0.05  0.904     0.861
+# 0.06  0.878     0.823
+# 0.07  0.868     0.806
+# 0.08  0.860     0.795
+# 0.09  0.853     0.784
+# 0.10  0.845     0.771
+#
+# Accuracy was used to select the optimal model using the largest value.
+# The final value used for the model was cp = 0.01.
+plot(rpart$finalModel, margin = 0.05)
+text(rpart$finalModel, cex = 0.9)
+rpart_dinteraction <- predict(rpart, test_set)
+confusionMatrix(rpart_dinteraction, test_set$dinteraction)
+# Confusion Matrix and Statistics
+#
+#           Reference
+# Prediction  1  2  3  4  5
+#          1  3  1  0  0  0
+#          2  0  5  0  0  0
+#          3  0  1 23  0  0
+#          4  0  0  2 43  0
+#          5  0  0  0  0 30
+#
+# Overall Statistics
+#
+# Accuracy : 0.963
+# 95% CI : (0.908, 0.99)
+# No Information Rate : 0.398
+# P-Value [Acc > NIR] : <2e-16
+#
+# Kappa : 0.947
+#
+# Mcnemar's Test P-Value : NA
+#
+# Statistics by Class:
+#
+#                      Class: 1 Class: 2 Class: 3 Class: 4 Class: 5
+# Sensitivity            1.0000   0.7143    0.920    1.000    1.000
+# Specificity            0.9905   1.0000    0.988    0.969    1.000
+# Pos Pred Value         0.7500   1.0000    0.958    0.956    1.000
+# Neg Pred Value         1.0000   0.9806    0.976    1.000    1.000
+# Prevalence             0.0278   0.0648    0.231    0.398    0.278
+# Detection Rate         0.0278   0.0463    0.213    0.398    0.278
+# Detection Prevalence   0.0370   0.0463    0.222    0.417    0.278
+# Balanced Accuracy      0.9952   0.8571    0.954    0.985    1.000
+
+
+
+set.seed(50, sample.kind = "Rounding") # if using R 3.6 or later
+# set.seed(50) # if using R 3.5 or earlier
+rf <- train(dinteraction ~ ., train_set, method = "rf", tuneGrid = data.frame(mtry = seq(1, 4)))
 ggplot(rf, highlight = TRUE)
 rf
-rf_dinteraction <- predict(rf, newdata = test_set)
+# Random Forest
+#
+# 948 samples
+# 4 predictor
+# 5 classes: '1', '2', '3', '4', '5'
+#
+# No pre-processing
+# Resampling: Bootstrapped (25 reps)
+# Summary of sample sizes: 948, 948, 948, 948, 948, 948, ...
+# Resampling results across tuning parameters:
+#
+#   mtry  Accuracy  Kappa
+# 2     0.982     0.974
+# 3     0.982     0.974
+# 4     0.980     0.972
+#
+# Accuracy was used to select the optimal model using the largest value.
+# The final value used for the model was mtry = 2.
+varImp(rf)
+# rf variable importance
+#
+# Overall
+# brna   100.0
+# bcd4    84.3
+# fcd4    31.1
+# frna     0.0
+rf_dinteraction <- predict(rf, test_set)
 confusionMatrix(rf_dinteraction, test_set$dinteraction)
+# Confusion Matrix and Statistics
+#
+#           Reference
+# Prediction  1  2  3  4  5
+#          1  3  0  0  0  0
+#          2  0  6  0  0  0
+#          3  0  1 25  0  0
+#          4  0  0  0 43  0
+#          5  0  0  0  0 30
+#
+# Overall Statistics
+#
+# Accuracy : 0.991
+# 95% CI : (0.949, 1)
+# No Information Rate : 0.398
+# P-Value [Acc > NIR] : <2e-16
+#
+# Kappa : 0.987
+#
+# Mcnemar's Test P-Value : NA
+#
+# Statistics by Class:
+#
+#                      Class: 1 Class: 2 Class: 3 Class: 4 Class: 5
+# Sensitivity            1.0000   0.8571    1.000    1.000    1.000
+# Specificity            1.0000   1.0000    0.988    1.000    1.000
+# Pos Pred Value         1.0000   1.0000    0.962    1.000    1.000
+# Neg Pred Value         1.0000   0.9902    1.000    1.000    1.000
+# Prevalence             0.0278   0.0648    0.231    0.398    0.278
+# Detection Rate         0.0278   0.0556    0.231    0.398    0.278
+# Detection Prevalence   0.0278   0.0556    0.241    0.398    0.278
+# Balanced Accuracy      1.0000   0.9286    0.994    1.000    1.000
+
+
+
+
+
+
+
+
+
 
