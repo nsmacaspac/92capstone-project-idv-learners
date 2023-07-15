@@ -1,6 +1,6 @@
 # ???
 # NICELLE SERNADILLA MACASPAC
-# ??? 2023
+# July 2023
 # RUNNING TIME: ??? minutes
 
 
@@ -86,13 +86,13 @@ dataset |>
 # 2 AZT+3TC+NVP   330
 # 3 TDF+3TC+EFV   698
 
-sum((dataset$dinteraction1 + dataset$dinteraction2 + dataset$dinteraction3 + dataset$dinteraction4 + dataset$dinteraction5) > 1 )
+sum((dataset$dinteraction1 + dataset$dinteraction2 + dataset$dinteraction3 + dataset$dinteraction4 + dataset$dinteraction5) > 1 ) # checks if there are >1 drug interaction per row
 # [1] 0
 sum(dataset$dinteraction1) +
   sum(dataset$dinteraction2) +
   sum(dataset$dinteraction3) +
   sum(dataset$dinteraction4) +
-  sum(dataset$dinteraction5)
+  sum(dataset$dinteraction5) # checks if drug interactions total to the number of observations
 # [1] 1056
 # there is only 1 drug interaction per row
 
@@ -150,10 +150,19 @@ summary(dataset1)
 
 if(!require(corrplot)) install.packages("corrplot", repos = "http://cran.us.r-project.org")
 library(corrplot)
-corrplot(cor(dataset1), method = "square", diag = FALSE, addCoef.col = "gray", tl.col = "black", number.cex = 0.4, number.digits = 2)
+corrplot(cor(dataset1), method = "square", diag = FALSE, addCoef.col = "gray", tl.col = "black", number.cex = 0.4, number.digits = 2) # shows the correlation of all variables
 # CD4 count is positively correlated with response and drug interaction
 # RNA load is negatively correlated with response and drug interaction
 # response is highly correlated with drug interaction as expected
+
+dataset1 |>
+  ggplot(aes(bcd4, brna, color = response)) +
+  geom_point() +
+  geom_smooth(color = "black", size = 0.5, method = "lm", se = FALSE) +
+  xlab("Before CD4 Count") +
+  ylab("Before RNA Load") +
+  scale_color_gradient(name = "Response", low = "skyblue", high = "dodgerblue4") # reverses the color gradient
+# CD4 count and response are negatively correlated with RNA load
 
 dataset1 |>
   ggplot(aes(fcd4, frna, color = response)) +
@@ -161,8 +170,17 @@ dataset1 |>
   geom_smooth(color = "black", size = 0.5, method = "lm", se = FALSE) +
   xlab("Follow-up CD4 Count") +
   ylab("Follow-up RNA Load") +
-  scale_color_gradient(name = "Response", low = "skyblue", high = "dodgerblue4") # reverses the color gradient
+  scale_color_gradient(name = "Response", low = "skyblue", high = "dodgerblue4")
 # CD4 count and response are negatively correlated with RNA load
+
+dataset1 |>
+  ggplot(aes(bcd4, brna, color = factor(dinteraction))) +
+  geom_point() +
+  geom_smooth(color = "black", size = 0.5, method = "lm", se = FALSE) +
+  xlab("Before CD4 Count") +
+  ylab("Before RNA Load") +
+  scale_color_manual(name = "Drug Interaction", values = c("tomato4", "orange3", "yellow3", "green4", "dodgerblue4"))
+# CD4 count and drug interaction are negatively correlated with RNA load
 
 dataset1 |>
   ggplot(aes(fcd4, frna, color = factor(dinteraction))) +
@@ -178,7 +196,7 @@ dataset1 |>
 # we preprocess dataset1
 
 dataset1 <- dataset1 |>
-  select(bcd4, fcd4, brna, frna, dinteraction) |> # retains CD4 count and RNA load as predictors and dinteraction as outcome
+  select(bcd4, fcd4, brna, frna, dinteraction) |> # keeps CD4 count and RNA load as predictors and drug interaction as outcome
   mutate(dinteraction = factor(dinteraction))
 head(dataset1)
 # bcd4 fcd4 brna frna dinteraction
@@ -198,230 +216,331 @@ str(dataset1)
 
 
 
-#######################
-#####     WIP     #####
-#######################
-
-
+# we partition dataset1
 
 options(digits = 3)
 if(!require(caret)) install.packages("caret", repos = "http://cran.us.r-project.org")
 library(caret)
-set.seed(20, sample.kind = "Rounding") # if using R 3.6 or later # for reproducibility during assessment
+set.seed(20, sample.kind = "Rounding") # if using R 3.6 or later
 # set.seed(20) # if using R 3.5 or earlier
-test_index <- createDataPartition(dataset1$dinteraction, p = 0.1, list = FALSE) # maximizes the train set
+# for reproducibility during assessment
+test_index <- createDataPartition(dataset1$dinteraction, p = 0.2, list = FALSE)
 train_set <- dataset1[-test_index,]
 test_set <- dataset1[test_index,]
 
 
 
+# we train and test the k-nearest neighbor model
+
 set.seed(30, sample.kind = "Rounding") # if using R 3.6 or later
 # set.seed(30) # if using R 3.5 or earlier
-knn <- train(dinteraction ~ ., train_set, method = "knn", tuneGrid = data.frame(k = seq(15, 30, 2)))
-ggplot(knn, highlight = TRUE)
-knn
+knn_model <- train(dinteraction ~ ., train_set, method = "knn", tuneGrid = data.frame(k = seq(10, 30, 1))) # tunes neighbor number
+ggplot(knn_model, highlight = TRUE)
+knn_model
 # k-Nearest Neighbors
 #
-# 948 samples
+# 844 samples
 # 4 predictor
 # 5 classes: '1', '2', '3', '4', '5'
 #
 # No pre-processing
 # Resampling: Bootstrapped (25 reps)
-# Summary of sample sizes: 948, 948, 948, 948, 948, 948, ...
+# Summary of sample sizes: 844, 844, 844, 844, 844, 844, ...
 # Resampling results across tuning parameters:
 #
 #   k   Accuracy  Kappa
-# 15  0.519     0.300
-# 17  0.527     0.311
-# 19  0.532     0.318
-# 21  0.529     0.313
-# 23  0.523     0.305
-# 25  0.528     0.312
-# 27  0.523     0.304
-# 29  0.522     0.303
+# 10  0.532     0.323
+# 11  0.534     0.326
+# 12  0.536     0.328
+# 13  0.537     0.329
+# 14  0.540     0.332
+# 15  0.537     0.328
+# 16  0.541     0.333
+# 17  0.540     0.332
+# 18  0.537     0.328
+# 19  0.538     0.330
+# 20  0.542     0.336
+# 21  0.542     0.336
+# 22  0.544     0.339
+# 23  0.545     0.340
+# 24  0.543     0.337
+# 25  0.542     0.336
+# 26  0.543     0.337
+# 27  0.541     0.334
+# 28  0.541     0.333
+# 29  0.539     0.331
+# 30  0.536     0.326
 #
 # Accuracy was used to select the optimal model using the largest value.
-# The final value used for the model was k = 19.
-knn_dinteraction <- predict(knn, test_set)
+# The final value used for the model was k = 23.
+
+knn_dinteraction <- predict(knn_model, test_set)
 confusionMatrix(knn_dinteraction, test_set$dinteraction)
 # Confusion Matrix and Statistics
 #
 #           Reference
 # Prediction  1  2  3  4  5
-#          1  0  0  0  0  0
-#          2  1  1  0  0  0
-#          3  2  6 12  3  1
-#          4  0  0 12 25  6
-#          5  0  0  1 15 23
+#         1  0  0  0  0  0
+#         2  0  1  0  1  0
+#         3  5 10 17  6  1
+#         4  0  2 26 47 13
+#         5  0  0  6 31 46
 #
 # Overall Statistics
 #
-# Accuracy : 0.565
-# 95% CI : (0.466, 0.66)
-# No Information Rate : 0.398
-# P-Value [Acc > NIR] : 0.00034
+# Accuracy : 0.524
+# 95% CI : (0.454, 0.592)
+# No Information Rate : 0.401
+# P-Value [Acc > NIR] : 0.000203
 #
-# Kappa : 0.368
+# Kappa : 0.299
 #
 # Mcnemar's Test P-Value : NA
 #
 # Statistics by Class:
 #
 #                      Class: 1 Class: 2 Class: 3 Class: 4 Class: 5
-# Sensitivity            0.0000  0.14286    0.480    0.581    0.767
-# Specificity            1.0000  0.99010    0.855    0.723    0.795
-# Pos Pred Value            NaN  0.50000    0.500    0.581    0.590
-# Neg Pred Value         0.9722  0.94340    0.845    0.723    0.899
-# Prevalence             0.0278  0.06481    0.231    0.398    0.278
-# Detection Rate         0.0000  0.00926    0.111    0.231    0.213
-# Detection Prevalence   0.0000  0.01852    0.222    0.398    0.361
-# Balanced Accuracy      0.5000  0.56648    0.668    0.652    0.781
+# Sensitivity            0.0000  0.07692   0.3469    0.553    0.767
+# Specificity            1.0000  0.99497   0.8650    0.677    0.757
+# Pos Pred Value            NaN  0.50000   0.4359    0.534    0.554
+# Neg Pred Value         0.9764  0.94286   0.8150    0.694    0.891
+# Prevalence             0.0236  0.06132   0.2311    0.401    0.283
+# Detection Rate         0.0000  0.00472   0.0802    0.222    0.217
+# Detection Prevalence   0.0000  0.00943   0.1840    0.415    0.392
+# Balanced Accuracy      0.5000  0.53595   0.6060    0.615    0.762
 
 
+
+# we train and test the recursive partitioning and regression trees model
 
 set.seed(40, sample.kind = "Rounding") # if using R 3.6 or later
 # set.seed(40) # if using R 3.5 or earlier
-rpart <- train(dinteraction ~ ., train_set, method = "rpart", tuneGrid = data.frame(cp = seq(0, 0.1, 0.01)))
-ggplot(rpart, highlight = TRUE)
-rpart
+rpart_model <- train(dinteraction ~ ., train_set, method = "rpart", tuneGrid = data.frame(cp = seq(0, 0.1, 0.01))) # tunes tree complexity
+ggplot(rpart_model, highlight = TRUE)
+rpart_model
 # CART
 #
-# 948 samples
+# 844 samples
 # 4 predictor
 # 5 classes: '1', '2', '3', '4', '5'
 #
 # No pre-processing
 # Resampling: Bootstrapped (25 reps)
-# Summary of sample sizes: 948, 948, 948, 948, 948, 948, ...
+# Summary of sample sizes: 844, 844, 844, 844, 844, 844, ...
 # Resampling results across tuning parameters:
 #
 #   cp    Accuracy  Kappa
-# 0.00  0.974     0.963
-# 0.01  0.974     0.963
-# 0.02  0.959     0.941
-# 0.03  0.942     0.917
-# 0.04  0.924     0.891
-# 0.05  0.904     0.861
-# 0.06  0.878     0.823
-# 0.07  0.868     0.806
-# 0.08  0.860     0.795
-# 0.09  0.853     0.784
-# 0.10  0.845     0.771
+# 0.00  0.970     0.958
+# 0.01  0.971     0.958
+# 0.02  0.964     0.949
+# 0.03  0.937     0.910
+# 0.04  0.914     0.877
+# 0.05  0.896     0.850
+# 0.06  0.874     0.817
+# 0.07  0.867     0.806
+# 0.08  0.855     0.788
+# 0.09  0.849     0.778
+# 0.10  0.849     0.778
 #
 # Accuracy was used to select the optimal model using the largest value.
 # The final value used for the model was cp = 0.01.
-plot(rpart$finalModel, margin = 0.05)
-text(rpart$finalModel, cex = 0.9)
-rpart_dinteraction <- predict(rpart, test_set)
+
+plot(rpart_model$finalModel, margin = 0.05) # margin adjusts the plot size
+text(rpart_model$finalModel, cex = 1) # cex adjusts the label size
+
+rpart_dinteraction <- predict(rpart_model, test_set)
 confusionMatrix(rpart_dinteraction, test_set$dinteraction)
 # Confusion Matrix and Statistics
 #
 #           Reference
 # Prediction  1  2  3  4  5
-#          1  3  1  0  0  0
-#          2  0  5  0  0  0
-#          3  0  1 23  0  0
-#          4  0  0  2 43  0
-#          5  0  0  0  0 30
+#         1  5  1  0  0  0
+#         2  0 11  0  0  0
+#         3  0  1 47  1  0
+#         4  0  0  2 83  0
+#         5  0  0  0  1 60
 #
 # Overall Statistics
 #
-# Accuracy : 0.963
-# 95% CI : (0.908, 0.99)
-# No Information Rate : 0.398
+# Accuracy : 0.972
+# 95% CI : (0.939, 0.99)
+# No Information Rate : 0.401
 # P-Value [Acc > NIR] : <2e-16
 #
-# Kappa : 0.947
+# Kappa : 0.96
 #
 # Mcnemar's Test P-Value : NA
 #
 # Statistics by Class:
 #
 #                      Class: 1 Class: 2 Class: 3 Class: 4 Class: 5
-# Sensitivity            1.0000   0.7143    0.920    1.000    1.000
-# Specificity            0.9905   1.0000    0.988    0.969    1.000
-# Pos Pred Value         0.7500   1.0000    0.958    0.956    1.000
-# Neg Pred Value         1.0000   0.9806    0.976    1.000    1.000
-# Prevalence             0.0278   0.0648    0.231    0.398    0.278
-# Detection Rate         0.0278   0.0463    0.213    0.398    0.278
-# Detection Prevalence   0.0370   0.0463    0.222    0.417    0.278
-# Balanced Accuracy      0.9952   0.8571    0.954    0.985    1.000
+# Sensitivity            1.0000   0.8462    0.959    0.976    1.000
+# Specificity            0.9952   1.0000    0.988    0.984    0.993
+# Pos Pred Value         0.8333   1.0000    0.959    0.976    0.984
+# Neg Pred Value         1.0000   0.9900    0.988    0.984    1.000
+# Prevalence             0.0236   0.0613    0.231    0.401    0.283
+# Detection Rate         0.0236   0.0519    0.222    0.392    0.283
+# Detection Prevalence   0.0283   0.0519    0.231    0.401    0.288
+# Balanced Accuracy      0.9976   0.9231    0.973    0.980    0.997
+
+# higher than the accuracy of the knn_model
 
 
 
+# we train and test the Rborist model
+
+if(!require(Rborist)) install.packages("Rborist", repos = "http://cran.us.r-project.org")
+library(Rborist)
 set.seed(50, sample.kind = "Rounding") # if using R 3.6 or later
 # set.seed(50) # if using R 3.5 or earlier
-rf <- train(dinteraction ~ ., train_set, method = "rf", tuneGrid = data.frame(mtry = seq(1, 4)))
-ggplot(rf, highlight = TRUE)
-rf
+rborist_model <- train(dinteraction ~ ., train_set, method = "Rborist", tuneGrid = expand.grid(predFixed = seq(1, 4), minNode = seq(1, 4))) # tunes combinations of predictor number and node size
+ggplot(rborist_model, highlight = TRUE)
+rborist_model
 # Random Forest
 #
-# 948 samples
+# 844 samples
 # 4 predictor
 # 5 classes: '1', '2', '3', '4', '5'
 #
 # No pre-processing
 # Resampling: Bootstrapped (25 reps)
-# Summary of sample sizes: 948, 948, 948, 948, 948, 948, ...
+# Summary of sample sizes: 844, 844, 844, 844, 844, 844, ...
 # Resampling results across tuning parameters:
 #
-#   mtry  Accuracy  Kappa
-# 2     0.982     0.974
-# 3     0.982     0.974
-# 4     0.980     0.972
+#   predFixed  minNode  Accuracy  Kappa
+# 1          1        0.970     0.958
+# 1          2        0.970     0.958
+# 1          3        0.971     0.959
+# 1          4        0.971     0.958
+# 2          1        0.980     0.971
+# 2          2        0.981     0.973
+# 2          3        0.980     0.972
+# 2          4        0.981     0.973
+# 3          1        0.980     0.972
+# 3          2        0.981     0.973
+# 3          3        0.980     0.972
+# 3          4        0.980     0.972
+# 4          1        0.981     0.973
+# 4          2        0.980     0.972
+# 4          3        0.980     0.972
+# 4          4        0.981     0.972
 #
 # Accuracy was used to select the optimal model using the largest value.
-# The final value used for the model was mtry = 2.
-varImp(rf)
-# rf variable importance
+# The final values used for the model were predFixed = 3 and minNode = 2.
+
+varImp(rborist_model)
+# Rborist variable importance
 #
-# Overall
+#     Overall
 # brna   100.0
-# bcd4    84.3
-# fcd4    31.1
+# fcd4    51.1
+# bcd4    45.3
 # frna     0.0
-rf_dinteraction <- predict(rf, test_set)
-confusionMatrix(rf_dinteraction, test_set$dinteraction)
+
+rborist_dinteraction <- predict(rborist_model, test_set)
+confusionMatrix(rborist_dinteraction, test_set$dinteraction)
 # Confusion Matrix and Statistics
 #
 #           Reference
 # Prediction  1  2  3  4  5
-#          1  3  0  0  0  0
-#          2  0  6  0  0  0
-#          3  0  1 25  0  0
-#          4  0  0  0 43  0
-#          5  0  0  0  0 30
+#         1  5  0  0  0  0
+#         2  0 13  0  0  0
+#         3  0  0 49  1  0
+#         4  0  0  0 84  0
+#         5  0  0  0  0 60
 #
 # Overall Statistics
 #
-# Accuracy : 0.991
-# 95% CI : (0.949, 1)
-# No Information Rate : 0.398
+# Accuracy : 0.995
+# 95% CI : (0.974, 1)
+# No Information Rate : 0.401
 # P-Value [Acc > NIR] : <2e-16
 #
-# Kappa : 0.987
+# Kappa : 0.993
 #
 # Mcnemar's Test P-Value : NA
 #
 # Statistics by Class:
 #
 #                      Class: 1 Class: 2 Class: 3 Class: 4 Class: 5
-# Sensitivity            1.0000   0.8571    1.000    1.000    1.000
-# Specificity            1.0000   1.0000    0.988    1.000    1.000
-# Pos Pred Value         1.0000   1.0000    0.962    1.000    1.000
-# Neg Pred Value         1.0000   0.9902    1.000    1.000    1.000
-# Prevalence             0.0278   0.0648    0.231    0.398    0.278
-# Detection Rate         0.0278   0.0556    0.231    0.398    0.278
-# Detection Prevalence   0.0278   0.0556    0.241    0.398    0.278
-# Balanced Accuracy      1.0000   0.9286    0.994    1.000    1.000
+# Sensitivity            1.0000   1.0000    1.000    0.988    1.000
+# Specificity            1.0000   1.0000    0.994    1.000    1.000
+# Pos Pred Value         1.0000   1.0000    0.980    1.000    1.000
+# Neg Pred Value         1.0000   1.0000    1.000    0.992    1.000
+# Prevalence             0.0236   0.0613    0.231    0.401    0.283
+# Detection Rate         0.0236   0.0613    0.231    0.396    0.283
+# Detection Prevalence   0.0236   0.0613    0.236    0.396    0.283
+# Balanced Accuracy      1.0000   1.0000    0.997    0.994    1.000
+# higher than the accuracies of the knn_model and rpart_model
 
 
 
+# we train and test the quadratic discriminant analysis model
+
+set.seed(60, sample.kind = "Rounding") # if using R 3.6 or later
+# set.seed(60) # if using R 3.5 or earlier
+qda_model <- train(dinteraction ~ ., train_set, method = "qda")
+qda_model
+# Quadratic Discriminant Analysis
+#
+# 844 samples
+# 4 predictor
+# 5 classes: '1', '2', '3', '4', '5'
+#
+# No pre-processing
+# Resampling: Bootstrapped (25 reps)
+# Summary of sample sizes: 844, 844, 844, 844, 844, 844, ...
+# Resampling results:
+#
+#   Accuracy  Kappa
+# 0.724     0.602
+
+qda_dinteraction <- predict(qda_model, test_set)
+confusionMatrix(qda_dinteraction, test_set$dinteraction)
+# Confusion Matrix and Statistics
+#
+#           Reference
+# Prediction  1  2  3  4  5
+#         1  4  2  1  0  0
+#         2  1  9  2  0  0
+#         3  0  2 26 10  0
+#         4  0  0 20 71 12
+#         5  0  0  0  4 48
+#
+# Overall Statistics
+#
+# Accuracy : 0.745
+# 95% CI : (0.681, 0.802)
+# No Information Rate : 0.401
+# P-Value [Acc > NIR] : <2e-16
+#
+# Kappa : 0.631
+#
+# Mcnemar's Test P-Value : NA
+#
+# Statistics by Class:
+#
+#                      Class: 1 Class: 2 Class: 3 Class: 4 Class: 5
+# Sensitivity            0.8000   0.6923    0.531    0.835    0.800
+# Specificity            0.9855   0.9849    0.926    0.748    0.974
+# Pos Pred Value         0.5714   0.7500    0.684    0.689    0.923
+# Neg Pred Value         0.9951   0.9800    0.868    0.872    0.925
+# Prevalence             0.0236   0.0613    0.231    0.401    0.283
+# Detection Rate         0.0189   0.0425    0.123    0.335    0.226
+# Detection Prevalence   0.0330   0.0566    0.179    0.486    0.245
+# Balanced Accuracy      0.8928   0.8386    0.728    0.792    0.887
+# higher than the accuracy of the knn_model but lower than the accuracies of the rpart_model and rborist_model
 
 
 
+# we examine the errors of the rborist_model
 
-
-
+which_index <- c(which(rborist_dinteraction != test_set$dinteraction))
+# [1] 138
+tibble(rborist = rborist_dinteraction[which_index], rpart = rpart_dinteraction[which_index], qda = qda_dinteraction[which_index], knn = knn_dinteraction[which_index], test_set = test_set$dinteraction[which_index])
+# A tibble: 1 × 5
+#   rborist rpart qda   knn   test_set
+#   <fct>   <fct> <fct> <fct> <fct>
+# 1 3       3     3     4     4
+# the error cannot be improved with an ensemble
 
