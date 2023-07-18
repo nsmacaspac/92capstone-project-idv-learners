@@ -1,0 +1,63 @@
+---
+title: "Antiretroviral Therapy Reaction and Failure Predictive Model Developed on the Akwa Ibom Dataset"
+author: "Nicelle Sernadilla Macaspac"
+date: "July 2023"
+output: pdf_document
+---
+
+
+```{r setup, include = FALSE}
+if(!require(knitr)) install.packages("knitr", repos = "http://cran.us.r-project.org") # require() checks if the package exists
+library(knitr)
+opts_chunk$set(
+	echo = FALSE,
+	collapse = TRUE,
+	warning = FALSE,
+	message = FALSE,
+	out.width = "50%",
+	fig.align = "center"
+)
+```
+
+
+## Introduction
+
+
+## Akwa Ibom Dataset
+
+
+## Tidy and Preprocessed Dataset
+
+
+### _CD4 Count_
+
+
+### _RNA Load_
+
+
+### _Drug Reaction_
+
+
+## Predictive Modeling
+
+
+### _k-Nearest Neighbor Model_
+
+
+### _Recursive Partitioning and Regression Trees Model_
+
+
+### _Rborist Model_
+
+
+### _Quadratic Discriminant Analysis Model_
+
+
+## Predictive Model
+
+
+## Conclusion
+
+
+## References
+

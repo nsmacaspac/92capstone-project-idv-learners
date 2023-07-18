@@ -1,6 +1,6 @@
 # ???
 # NICELLE SERNADILLA MACASPAC
-# July 2023
+# JULY 2023
 # RUNNING TIME: ??? minutes
 
 
@@ -43,7 +43,7 @@ str(dataset)
 
 # we render the dataset into tidy format and numeric
 
-colnames(dataset) <- c("id", "sex", "bcd4", "fcd4", "brna", "frna", "bweight", "fweight", "drug", "response", "dinteraction1", "dinteraction2", "dinteraction3", "dinteraction4", "dinteraction5")
+colnames(dataset) <- c("id", "sex", "bcd4", "fcd4", "brna", "frna", "bweight", "fweight", "drug", "response", "dreaction1", "dreaction2", "dreaction3", "dreaction4", "dreaction5")
 str(dataset)
 # 'data.frame':	1056 obs. of  15 variables:
 # $ id           : num  1 2 3 4 5 6 7 8 9 10 ...
@@ -56,11 +56,11 @@ str(dataset)
 # $ fweight      : num  43 60 75 66 55 56 60 68 82 80 ...
 # $ drug         : chr  "TDF+3TC+EFV" "AZT+3TC+NVP" "AZT+3TC+NVP" "AZT+3TC+NVP" ...
 # $ response     : num  53.6 55.3 50 50 76 ...
-# $ dinteraction1: num  0 0 0 0 0 0 0 0 1 0 ...
-# $ dinteraction2: num  0 0 1 0 0 1 0 0 0 0 ...
-# $ dinteraction3: num  1 0 0 1 0 0 1 0 0 1 ...
-# $ dinteraction4: num  0 1 0 0 0 0 0 1 0 0 ...
-# $ dinteraction5: num  0 0 0 0 1 0 0 0 0 0 ...
+# $ dreaction1   : num  0 0 0 0 0 0 0 0 1 0 ...
+# $ dreaction2   : num  0 0 1 0 0 1 0 0 0 0 ...
+# $ dreaction3   : num  1 0 0 1 0 0 1 0 0 1 ...
+# $ dreaction4   : num  0 1 0 0 0 0 0 1 0 0 ...
+# $ dreaction5   : num  0 0 0 0 1 0 0 0 0 0 ...
 
 sum(is.na(dataset))
 # [1] 0
@@ -86,27 +86,27 @@ dataset |>
 # 2 AZT+3TC+NVP   330
 # 3 TDF+3TC+EFV   698
 
-sum((dataset$dinteraction1 + dataset$dinteraction2 + dataset$dinteraction3 + dataset$dinteraction4 + dataset$dinteraction5) > 1 ) # checks if there are >1 drug interaction per row
+sum((dataset$dreaction1 + dataset$dreaction2 + dataset$dreaction3 + dataset$dreaction4 + dataset$dreaction5) > 1 ) # checks if there are >1 drug reaction per row
 # [1] 0
-sum(dataset$dinteraction1) +
-  sum(dataset$dinteraction2) +
-  sum(dataset$dinteraction3) +
-  sum(dataset$dinteraction4) +
-  sum(dataset$dinteraction5) # checks if drug interactions total to the number of observations
+sum(dataset$dreaction1) +
+  sum(dataset$dreaction2) +
+  sum(dataset$dreaction3) +
+  sum(dataset$dreaction4) +
+  sum(dataset$dreaction5) # checks if drug reactions total to the number of observations
 # [1] 1056
-# there is only 1 drug interaction per row
+# there is only 1 drug reaction per row
 
 dataset1 <- dataset |>
   mutate(sex = ifelse(sex == "F", 1, 2)) |>
   mutate(drug = case_when(drug == "AZT+3TC+EFV" ~ 1,
                           drug == "AZT+3TC+NVP" ~ 2,
                           drug == "TDF+3TC+EFV" ~ 3)) |> # relabels drugs as 1-3
-  mutate(dinteraction = case_when(dinteraction1 == 1 ~ 1,
-                                  dinteraction2 == 1 ~ 2,
-                                  dinteraction3 == 1 ~ 3,
-                                  dinteraction4 == 1 ~ 4,
-                                  dinteraction5 == 1 ~ 5,)) |> # relabels drug interactions as 1-5 then merges them under column dinteraction
-  select(-dinteraction1, -dinteraction2, -dinteraction3, -dinteraction4, -dinteraction5)
+  mutate(dreaction = case_when(dreaction1 == 1 ~ 1,
+                               dreaction2 == 1 ~ 2,
+                               dreaction3 == 1 ~ 3,
+                               dreaction4 == 1 ~ 4,
+                               dreaction5 == 1 ~ 5,)) |> # relabels drug reactions as 1-5 then merges them under column dreaction
+  select(-dreaction1, -dreaction2, -dreaction3, -dreaction4, -dreaction5)
 str(dataset1)
 # 'data.frame':	1056 obs. of  11 variables:
 # $ id          : num  1 2 3 4 5 6 7 8 9 10 ...
@@ -119,11 +119,11 @@ str(dataset1)
 # $ fweight     : num  43 60 75 66 55 56 60 68 82 80 ...
 # $ drug        : num  3 2 2 2 2 3 2 3 2 2 ...
 # $ response    : num  53.6 55.3 50 50 76 ...
-# $ dinteraction: num  3 4 2 3 5 2 3 4 1 3 ...
+# $ dreaction   : num  3 4 2 3 5 2 3 4 1 3 ...
 
 
 
-# we examine dataset1
+# we preprocess dataset1
 
 summary(dataset1)
 # id              sex             bcd4             fcd4
@@ -140,7 +140,7 @@ summary(dataset1)
 # Mean   :3.773   Mean   :2.164   Mean   : 63.66   Mean   : 64.34
 # 3rd Qu.:4.700   3rd Qu.:2.500   3rd Qu.: 71.00   3rd Qu.: 72.00
 # Max.   :6.500   Max.   :6.300   Max.   :125.00   Max.   :120.00
-# drug          response      dinteraction
+# drug          response      dreaction
 # Min.   :1.000   Min.   :30.00   Min.   :1.000
 # 1st Qu.:2.000   1st Qu.:50.99   1st Qu.:3.000
 # Median :3.000   Median :57.84   Median :4.000
@@ -151,72 +151,68 @@ summary(dataset1)
 if(!require(corrplot)) install.packages("corrplot", repos = "http://cran.us.r-project.org")
 library(corrplot)
 corrplot(cor(dataset1), method = "square", diag = FALSE, addCoef.col = "gray", tl.col = "black", number.cex = 0.4, number.digits = 2) # shows the correlation of all variables
-# CD4 count is positively correlated with response and drug interaction
-# RNA load is negatively correlated with response and drug interaction
-# response is highly correlated with drug interaction as expected
+# CD4 count is positively correlated with response and drug reaction
+# RNA load is negatively correlated with response and drug reaction
+# response is highly correlated with drug reaction as expected
 
 dataset1 |>
-  ggplot(aes(bcd4, brna, color = response)) +
+  ggplot(aes(bcd4, response, color = factor(dreaction))) +
   geom_point() +
   geom_smooth(color = "black", size = 0.5, method = "lm", se = FALSE) +
-  xlab("Before CD4 Count") +
-  ylab("Before RNA Load") +
-  scale_color_gradient(name = "Response", low = "skyblue", high = "dodgerblue4") # reverses the color gradient
-# CD4 count and response are negatively correlated with RNA load
+  scale_x_continuous("Baseline CD4 Count", limits = c(0, 2000)) +
+  scale_y_continuous("Response", limits = c(30, 110)) + # encompasses the limits of the axes of both baseline and follow-up data for ease of comparison
+  scale_color_manual(name = "Drug Reaction", values = c("tomato4", "orange3", "yellow3", "green4", "dodgerblue4"))
 
 dataset1 |>
-  ggplot(aes(fcd4, frna, color = response)) +
+  ggplot(aes(fcd4, response, color = factor(dreaction))) +
   geom_point() +
   geom_smooth(color = "black", size = 0.5, method = "lm", se = FALSE) +
-  xlab("Follow-up CD4 Count") +
-  ylab("Follow-up RNA Load") +
-  scale_color_gradient(name = "Response", low = "skyblue", high = "dodgerblue4")
-# CD4 count and response are negatively correlated with RNA load
+  scale_x_continuous("Follow-up CD4 Count", limits = c(0, 2000)) +
+  scale_y_continuous("Response", limits = c(30, 110)) +
+  scale_color_manual(name = "Drug Reaction", values = c("tomato4", "orange3", "yellow3", "green4", "dodgerblue4"))
+# CD4 count is positively correlated with response and drug reaction
+# there is a general increase in CD4 count at follow-up
 
 dataset1 |>
-  ggplot(aes(bcd4, brna, color = factor(dinteraction))) +
+  ggplot(aes(brna, response, color = factor(dreaction))) +
   geom_point() +
   geom_smooth(color = "black", size = 0.5, method = "lm", se = FALSE) +
-  xlab("Before CD4 Count") +
-  ylab("Before RNA Load") +
-  scale_color_manual(name = "Drug Interaction", values = c("tomato4", "orange3", "yellow3", "green4", "dodgerblue4"))
-# CD4 count and drug interaction are negatively correlated with RNA load
+  scale_x_continuous("Baseline RNA Load", limits = c(1, 7)) +
+  ylab("Response") +
+  scale_color_manual(name = "Drug Reaction", values = c("tomato4", "orange3", "yellow3", "green4", "dodgerblue4"))
 
 dataset1 |>
-  ggplot(aes(fcd4, frna, color = factor(dinteraction))) +
+  ggplot(aes(frna, response, color = factor(dreaction))) +
   geom_point() +
   geom_smooth(color = "black", size = 0.5, method = "lm", se = FALSE) +
-  xlab("Follow-up CD4 Count") +
-  ylab("Follow-up RNA Load") +
-  scale_color_manual(name = "Drug Interaction", values = c("tomato4", "orange3", "yellow3", "green4", "dodgerblue4"))
-# CD4 count and drug interaction are negatively correlated with RNA load
+  scale_x_continuous("Follow-up RNA Load", limits = c(1, 7)) +
+  ylab("Response") +
+  scale_color_manual(name = "Drug Reaction", values = c("tomato4", "orange3", "yellow3", "green4", "dodgerblue4"))
+# RNA load is negatively correlated with response and drug reaction
+# there is a general decrease in RNA load at follow-up
 
-
-
-# we preprocess dataset1
-
-dataset1 <- dataset1 |>
-  select(bcd4, fcd4, brna, frna, dinteraction) |> # keeps CD4 count and RNA load as predictors and drug interaction as outcome
-  mutate(dinteraction = factor(dinteraction))
-head(dataset1)
-# bcd4 fcd4 brna frna dinteraction
+dataset2 <- dataset1 |>
+  select(bcd4, fcd4, brna, frna, dreaction) |> # keeps CD4 count and RNA load as predictors and drug reaction as outcome
+  mutate(dreaction = factor(dreaction))
+head(dataset2)
+# bcd4 fcd4 brna frna dreaction
 # 1  148  106  3.0  1.3            3
 # 2  145  378  2.5  1.3            4
 # 3   78  131  4.1  1.7            2
 # 4  295  574  4.4  1.9            3
 # 5  397  792  1.9  1.3            5
 # 6  155  280  4.2  1.7            2
-str(dataset1)
+str(dataset2)
 # 'data.frame':	1056 obs. of  5 variables:
 # $ bcd4        : num  148 145 78 295 397 155 303 370 210 120 ...
 # $ fcd4        : num  106 378 131 574 792 280 679 615 242 278 ...
 # $ brna        : num  3 2.5 4.1 4.4 1.9 4.2 4.2 5.1 5.1 2.7 ...
 # $ frna        : num  1.3 1.3 1.7 1.9 1.3 1.7 1.3 1.7 4.1 1.7 ...
-# $ dinteraction: Factor w/ 5 levels "1","2","3","4",..: 3 4 2 3 5 2 3 4 1 3 ...
+# $ dreaction: Factor w/ 5 levels "1","2","3","4",..: 3 4 2 3 5 2 3 4 1 3 ...
 
 
 
-# we partition dataset1
+# we partition dataset2
 
 options(digits = 3)
 if(!require(caret)) install.packages("caret", repos = "http://cran.us.r-project.org")
@@ -224,9 +220,9 @@ library(caret)
 set.seed(20, sample.kind = "Rounding") # if using R 3.6 or later
 # set.seed(20) # if using R 3.5 or earlier
 # for reproducibility during assessment
-test_index <- createDataPartition(dataset1$dinteraction, p = 0.2, list = FALSE)
-train_set <- dataset1[-test_index,]
-test_set <- dataset1[test_index,]
+test_index <- createDataPartition(dataset2$dreaction, p = 0.2, list = FALSE)
+train_set <- dataset2[-test_index,]
+test_set <- dataset2[test_index,]
 
 
 
@@ -234,7 +230,7 @@ test_set <- dataset1[test_index,]
 
 set.seed(30, sample.kind = "Rounding") # if using R 3.6 or later
 # set.seed(30) # if using R 3.5 or earlier
-knn_model <- train(dinteraction ~ ., train_set, method = "knn", tuneGrid = data.frame(k = seq(10, 30, 1))) # tunes neighbor number
+knn_model <- train(dreaction ~ ., train_set, method = "knn", tuneGrid = data.frame(k = seq(10, 30, 1))) # tunes neighbor number
 ggplot(knn_model, highlight = TRUE)
 knn_model
 # k-Nearest Neighbors
@@ -274,8 +270,8 @@ knn_model
 # Accuracy was used to select the optimal model using the largest value.
 # The final value used for the model was k = 23.
 
-knn_dinteraction <- predict(knn_model, test_set)
-confusionMatrix(knn_dinteraction, test_set$dinteraction)
+knn_dreaction <- predict(knn_model, test_set)
+confusionMatrix(knn_dreaction, test_set$dreaction)
 # Confusion Matrix and Statistics
 #
 #           Reference
@@ -315,7 +311,7 @@ confusionMatrix(knn_dinteraction, test_set$dinteraction)
 
 set.seed(40, sample.kind = "Rounding") # if using R 3.6 or later
 # set.seed(40) # if using R 3.5 or earlier
-rpart_model <- train(dinteraction ~ ., train_set, method = "rpart", tuneGrid = data.frame(cp = seq(0, 0.1, 0.01))) # tunes tree complexity
+rpart_model <- train(dreaction ~ ., train_set, method = "rpart", tuneGrid = data.frame(cp = seq(0, 0.1, 0.01))) # tunes tree complexity
 ggplot(rpart_model, highlight = TRUE)
 rpart_model
 # CART
@@ -348,8 +344,8 @@ rpart_model
 plot(rpart_model$finalModel, margin = 0.05) # margin adjusts the plot size
 text(rpart_model$finalModel, cex = 1) # cex adjusts the label size
 
-rpart_dinteraction <- predict(rpart_model, test_set)
-confusionMatrix(rpart_dinteraction, test_set$dinteraction)
+rpart_dreaction <- predict(rpart_model, test_set)
+confusionMatrix(rpart_dreaction, test_set$dreaction)
 # Confusion Matrix and Statistics
 #
 #           Reference
@@ -383,7 +379,7 @@ confusionMatrix(rpart_dinteraction, test_set$dinteraction)
 # Detection Prevalence   0.0283   0.0519    0.231    0.401    0.288
 # Balanced Accuracy      0.9976   0.9231    0.973    0.980    0.997
 
-# higher than the accuracy of the knn_model
+# higher than the accuracy of the k-nearest neighbor model
 
 
 
@@ -393,7 +389,7 @@ if(!require(Rborist)) install.packages("Rborist", repos = "http://cran.us.r-proj
 library(Rborist)
 set.seed(50, sample.kind = "Rounding") # if using R 3.6 or later
 # set.seed(50) # if using R 3.5 or earlier
-rborist_model <- train(dinteraction ~ ., train_set, method = "Rborist", tuneGrid = expand.grid(predFixed = seq(1, 4), minNode = seq(1, 4))) # tunes combinations of predictor number and node size
+rborist_model <- train(dreaction ~ ., train_set, method = "Rborist", tuneGrid = expand.grid(predFixed = seq(1, 4), minNode = seq(1, 4))) # tunes combinations of predictor number and node size
 ggplot(rborist_model, highlight = TRUE)
 rborist_model
 # Random Forest
@@ -437,8 +433,10 @@ varImp(rborist_model)
 # bcd4    45.3
 # frna     0.0
 
-rborist_dinteraction <- predict(rborist_model, test_set)
-confusionMatrix(rborist_dinteraction, test_set$dinteraction)
+# baseline RNA load is the most important predictor
+
+rborist_dreaction <- predict(rborist_model, test_set)
+confusionMatrix(rborist_dreaction, test_set$dreaction)
 # Confusion Matrix and Statistics
 #
 #           Reference
@@ -471,7 +469,8 @@ confusionMatrix(rborist_dinteraction, test_set$dinteraction)
 # Detection Rate         0.0236   0.0613    0.231    0.396    0.283
 # Detection Prevalence   0.0236   0.0613    0.236    0.396    0.283
 # Balanced Accuracy      1.0000   1.0000    0.997    0.994    1.000
-# higher than the accuracies of the knn_model and rpart_model
+
+# higher than the accuracies of the k-nearest neighbor model and the recursive partitioning and regression trees model
 
 
 
@@ -479,7 +478,7 @@ confusionMatrix(rborist_dinteraction, test_set$dinteraction)
 
 set.seed(60, sample.kind = "Rounding") # if using R 3.6 or later
 # set.seed(60) # if using R 3.5 or earlier
-qda_model <- train(dinteraction ~ ., train_set, method = "qda")
+qda_model <- train(dreaction ~ ., train_set, method = "qda")
 qda_model
 # Quadratic Discriminant Analysis
 #
@@ -495,8 +494,8 @@ qda_model
 #   Accuracy  Kappa
 # 0.724     0.602
 
-qda_dinteraction <- predict(qda_model, test_set)
-confusionMatrix(qda_dinteraction, test_set$dinteraction)
+qda_dreaction <- predict(qda_model, test_set)
+confusionMatrix(qda_dreaction, test_set$dreaction)
 # Confusion Matrix and Statistics
 #
 #           Reference
@@ -529,18 +528,92 @@ confusionMatrix(qda_dinteraction, test_set$dinteraction)
 # Detection Rate         0.0189   0.0425    0.123    0.335    0.226
 # Detection Prevalence   0.0330   0.0566    0.179    0.486    0.245
 # Balanced Accuracy      0.8928   0.8386    0.728    0.792    0.887
-# higher than the accuracy of the knn_model but lower than the accuracies of the rpart_model and rborist_model
+
+# higher than the accuracy of the k-nearest neighbor model
+# lower than the accuracies of the recursive partitioning and regression trees model and the Rborist model
 
 
 
-# we examine the errors of the rborist_model
+# we examine the errors of the Rborist model
 
-which_index <- c(which(rborist_dinteraction != test_set$dinteraction))
+which_index <- c(which(rborist_dreaction != test_set$dreaction))
 # [1] 138
-tibble(rborist = rborist_dinteraction[which_index], rpart = rpart_dinteraction[which_index], qda = qda_dinteraction[which_index], knn = knn_dinteraction[which_index], test_set = test_set$dinteraction[which_index])
+tibble(rborist = rborist_dreaction[which_index], rpart = rpart_dreaction[which_index], qda = qda_dreaction[which_index], knn = knn_dreaction[which_index], test_set = test_set$dreaction[which_index])
 # A tibble: 1 × 5
 #   rborist rpart qda   knn   test_set
 #   <fct>   <fct> <fct> <fct> <fct>
 # 1 3       3     3     4     4
+
 # the error cannot be improved with an ensemble
+
+
+
+# we retrain and retest the Rborist model using the baseline CD4 count and RNA load only
+
+set.seed(70, sample.kind = "Rounding") # if using R 3.6 or later
+# set.seed(70) # if using R 3.5 or earlier
+rborist_model1 <- train(dreaction ~ bcd4 + brna, train_set, method = "Rborist", tuneGrid = expand.grid(predFixed = seq(1, 2), minNode = seq(1, 4)))
+ggplot(rborist_model1, highlight = TRUE)
+rborist_model1
+# Random Forest
+#
+# 844 samples
+# 2 predictor
+# 5 classes: '1', '2', '3', '4', '5'
+#
+# No pre-processing
+# Resampling: Bootstrapped (25 reps)
+# Summary of sample sizes: 844, 844, 844, 844, 844, 844, ...
+# Resampling results across tuning parameters:
+#
+#   predFixed  minNode  Accuracy  Kappa
+# 1          1        0.776     0.676
+# 1          2        0.779     0.679
+# 1          3        0.777     0.677
+# 1          4        0.780     0.680
+# 2          1        0.757     0.650
+# 2          2        0.758     0.651
+# 2          3        0.759     0.653
+# 2          4        0.760     0.653
+#
+# Accuracy was used to select the optimal model using the largest value.
+# The final values used for the model were predFixed = 1 and minNode = 4.
+
+rborist_dreaction1 <- predict(rborist_model1, test_set)
+confusionMatrix(rborist_dreaction1, test_set$dreaction)
+# Confusion Matrix and Statistics
+#
+# Reference
+# Prediction  1  2  3  4  5
+# 1  1  0  0  0  0
+# 2  1  7  3  0  0
+# 3  3  5 29  4  0
+# 4  0  1 17 79  0
+# 5  0  0  0  2 60
+#
+# Overall Statistics
+#
+# Accuracy : 0.83
+# 95% CI : (0.773, 0.878)
+# No Information Rate : 0.401
+# P-Value [Acc > NIR] : <2e-16
+#
+# Kappa : 0.752
+#
+# Mcnemar's Test P-Value : NA
+#
+# Statistics by Class:
+#
+#                      Class: 1 Class: 2 Class: 3 Class: 4 Class: 5
+# Sensitivity           0.20000   0.5385    0.592    0.929    1.000
+# Specificity           1.00000   0.9799    0.926    0.858    0.987
+# Pos Pred Value        1.00000   0.6364    0.707    0.814    0.968
+# Neg Pred Value        0.98104   0.9701    0.883    0.948    1.000
+# Prevalence            0.02358   0.0613    0.231    0.401    0.283
+# Detection Rate        0.00472   0.0330    0.137    0.373    0.283
+# Detection Prevalence  0.00472   0.0519    0.193    0.458    0.292
+# Balanced Accuracy     0.60000   0.7592    0.759    0.894    0.993
+
+# higher than the accuracies of the k-nearest neighbor model and the quadratic discriminant analysis model
+# lower than the accuracies of the recursive partitioning and regression trees model and the Rborist model
 
