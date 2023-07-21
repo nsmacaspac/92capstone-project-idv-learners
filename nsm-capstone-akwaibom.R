@@ -6,22 +6,25 @@
 
 
 
+# UNIQUE RECORDS OF THE AKWA IBOM HIV DATABASE
+
+
+
 # we import the dataset
 
 options(timeout = 120) # timeout in seconds for some Internet operations
 if(!file.exists("mmc1.xlsx")) download.file("https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8142042/bin/mmc1.xlsx", "mmc1.xlsx")
 
-if(!require(readxl)) install.packages("readxl", repos = "http://cran.us.r-project.org")
+if(!require(readxl)) install.packages("readxl", repos = "http://cran.us.r-project.org") # require() checks if the package exists
 library(readxl)
 dataset <- as.data.frame(read_xlsx("mmc1.xlsx", range = "N27:AB1083")) # range reads the Unique Records table, which is the combined version of the Individual Treatment Change Episodes table
-head(dataset) # fig1 in the Rmd file
+head(dataset, n = 5) # fig1 in the Rmd file
 # PID SEX BCD4 FCD4 BRNA FRNA BWt(kg) FWt(kg)    DRUGCOMB       PR C1 C2 C3 C4 C5
 # 1   1   F  148  106  3.0  1.3      42      43 TDF+3TC+EFV 53.56199  0  0  1  0  0
 # 2   2   F  145  378  2.5  1.3      57      60 AZT+3TC+NVP 55.33422  0  0  0  1  0
 # 3   3   M   78  131  4.1  1.7      70      75 AZT+3TC+NVP 50.00000  0  1  0  0  0
 # 4   4   M  295  574  4.4  1.9      64      66 AZT+3TC+NVP 50.00000  0  0  1  0  0
 # 5   5   F  397  792  1.9  1.3      52      55 AZT+3TC+NVP 76.00000  0  0  0  0  1
-# 6   6   F  155  280  4.2  1.7      59      56 TDF+3TC+EFV 50.00000  0  1  0  0  0
 str(dataset)
 # 'data.frame':	1056 obs. of  15 variables:
 # $ PID     : num  1 2 3 4 5 6 7 8 9 10 ...
@@ -41,31 +44,45 @@ str(dataset)
 # $ C5      : num  0 0 0 0 1 0 0 0 0 0 ...
 
 
-# we render the dataset into tidy format and numeric
 
-colnames(dataset) <- c("id", "sex", "bcd4", "fcd4", "brna", "frna", "bweight", "fweight", "therapy", "response", "dreaction1", "dreaction2", "dreaction3", "dreaction4", "dreaction5")
+# we render the dataset into tidy and numeric format
+
+colnames(dataset) <- c("id", "sex", "bcd4", "fcd4", "brna", "frna", "bweight", "fweight", "therapy", "response", "vhi_tf", "hi_tf", "li", "vli", "ni")
+head(dataset, n = 5)
+# id sex bcd4 fcd4 brna frna bweight fweight     therapy response vhi_tf hi_tf li
+# 1  1   F  148  106  3.0  1.3      42      43 TDF+3TC+EFV 53.56199      0     0  1
+# 2  2   F  145  378  2.5  1.3      57      60 AZT+3TC+NVP 55.33422      0     0  0
+# 3  3   M   78  131  4.1  1.7      70      75 AZT+3TC+NVP 50.00000      0     1  0
+# 4  4   M  295  574  4.4  1.9      64      66 AZT+3TC+NVP 50.00000      0     0  1
+# 5  5   F  397  792  1.9  1.3      52      55 AZT+3TC+NVP 76.00000      0     0  0
+# vli ni
+# 1   0  0
+# 2   1  0
+# 3   0  0
+# 4   0  0
+# 5   0  1
 str(dataset)
 # 'data.frame':	1056 obs. of  15 variables:
-# $ id           : num  1 2 3 4 5 6 7 8 9 10 ...
-# $ sex          : chr  "F" "F" "M" "M" ...
-# $ bcd4         : num  148 145 78 295 397 155 303 370 210 120 ...
-# $ fcd4         : num  106 378 131 574 792 280 679 615 242 278 ...
-# $ brna         : num  3 2.5 4.1 4.4 1.9 4.2 4.2 5.1 5.1 2.7 ...
-# $ frna         : num  1.3 1.3 1.7 1.9 1.3 1.7 1.3 1.7 4.1 1.7 ...
-# $ bweight      : num  42 57 70 64 52 59 62 78 82 85 ...
-# $ fweight      : num  43 60 75 66 55 56 60 68 82 80 ...
-# $ therapy         : chr  "TDF+3TC+EFV" "AZT+3TC+NVP" "AZT+3TC+NVP" "AZT+3TC+NVP" ...
-# $ response     : num  53.6 55.3 50 50 76 ...
-# $ dreaction1   : num  0 0 0 0 0 0 0 0 1 0 ...
-# $ dreaction2   : num  0 0 1 0 0 1 0 0 0 0 ...
-# $ dreaction3   : num  1 0 0 1 0 0 1 0 0 1 ...
-# $ dreaction4   : num  0 1 0 0 0 0 0 1 0 0 ...
-# $ dreaction5   : num  0 0 0 0 1 0 0 0 0 0 ...
+# $ id      : num  1 2 3 4 5 6 7 8 9 10 ...
+# $ sex     : chr  "F" "F" "M" "M" ...
+# $ bcd4    : num  148 145 78 295 397 155 303 370 210 120 ...
+# $ fcd4    : num  106 378 131 574 792 280 679 615 242 278 ...
+# $ brna    : num  3 2.5 4.1 4.4 1.9 4.2 4.2 5.1 5.1 2.7 ...
+# $ frna    : num  1.3 1.3 1.7 1.9 1.3 1.7 1.3 1.7 4.1 1.7 ...
+# $ bweight : num  42 57 70 64 52 59 62 78 82 85 ...
+# $ fweight : num  43 60 75 66 55 56 60 68 82 80 ...
+# $ therapy : chr  "TDF+3TC+EFV" "AZT+3TC+NVP" "AZT+3TC+NVP" "AZT+3TC+NVP" ...
+# $ response: num  53.6 55.3 50 50 76 ...
+# $ vhi_tf  : num  0 0 0 0 0 0 0 0 1 0 ...
+# $ hi_tf   : num  0 0 1 0 0 1 0 0 0 0 ...
+# $ li      : num  1 0 0 1 0 0 1 0 0 1 ...
+# $ vli     : num  0 1 0 0 0 0 0 1 0 0 ...
+# $ ni      : num  0 0 0 0 1 0 0 0 0 0 ...
 
 sum(is.na(dataset))
 # [1] 0
 
-if(!require(tidyverse)) install.packages("tidyverse", repos = "http://cran.us.r-project.org") # require() checks if the package exists
+if(!require(tidyverse)) install.packages("tidyverse", repos = "http://cran.us.r-project.org")
 library(tidyverse)
 dataset |>
   group_by(sex) |>
@@ -86,40 +103,49 @@ dataset |>
 # 2 AZT+3TC+NVP   330
 # 3 TDF+3TC+EFV   698
 
-sum((dataset$dreaction1 + dataset$dreaction2 + dataset$dreaction3 + dataset$dreaction4 + dataset$dreaction5) > 1 ) # checks if there are >1 drug reaction per row
+sum((dataset$vhi_tf + dataset$hi_tf + dataset$li + dataset$vli + dataset$ni) > 1 ) # checks if there are >1 drug reaction per row
 # [1] 0
-sum(dataset$dreaction1) +
-  sum(dataset$dreaction2) +
-  sum(dataset$dreaction3) +
-  sum(dataset$dreaction4) +
-  sum(dataset$dreaction5) # checks if drug reactions total to the number of observations
+sum(dataset$vhi_tf) +
+  sum(dataset$hi_tf) +
+  sum(dataset$li) +
+  sum(dataset$vli) +
+  sum(dataset$ni) # checks if drug reactions total to the number of observations
 # [1] 1056
 # there is only 1 drug reaction per row
 
 dataset1 <- dataset |>
-  mutate(sex = ifelse(sex == "F", 1, 2)) |>
+  mutate(sex = ifelse(sex == "F", 1, 2)) |> # relabels sexes as 1-2
+  mutate(brna = brna*10^2) |>
+  mutate(frna = frna*10^2) |>
   mutate(therapy = case_when(therapy == "AZT+3TC+EFV" ~ 1,
-                          therapy == "AZT+3TC+NVP" ~ 2,
-                          therapy == "TDF+3TC+EFV" ~ 3)) |> # relabels therapies as 1-3
-  mutate(dreaction = case_when(dreaction1 == 1 ~ 1,
-                               dreaction2 == 1 ~ 2,
-                               dreaction3 == 1 ~ 3,
-                               dreaction4 == 1 ~ 4,
-                               dreaction5 == 1 ~ 5,)) |> # relabels drug reactions as 1-5 then merges them under column dreaction
-  select(-dreaction1, -dreaction2, -dreaction3, -dreaction4, -dreaction5)
+                             therapy == "AZT+3TC+NVP" ~ 2,
+                             therapy == "TDF+3TC+EFV" ~ 3)) |> # relabels antiretroviral therapies as 1-3
+  mutate(reaction = case_when(vhi_tf == 1 ~ 1,
+                              hi_tf == 1 ~ 2,
+                              li == 1 ~ 3,
+                              vli == 1 ~ 4,
+                              ni == 1 ~ 5,)) |> # relabels drug reactions as 1-5 then merges them under column reaction
+  select(-vhi_tf, -hi_tf, -li, -vli, -ni)
+head(dataset1, n = 5)
+# id sex bcd4 fcd4 brna frna bweight fweight therapy response reaction
+# 1  1   1  148  106  3.0  1.3      42      43       3 53.56199        3
+# 2  2   1  145  378  2.5  1.3      57      60       2 55.33422        4
+# 3  3   2   78  131  4.1  1.7      70      75       2 50.00000        2
+# 4  4   2  295  574  4.4  1.9      64      66       2 50.00000        3
+# 5  5   1  397  792  1.9  1.3      52      55       2 76.00000        5
 str(dataset1)
 # 'data.frame':	1056 obs. of  11 variables:
-# $ id          : num  1 2 3 4 5 6 7 8 9 10 ...
-# $ sex         : num  1 1 2 2 1 1 1 2 1 2 ...
-# $ bcd4        : num  148 145 78 295 397 155 303 370 210 120 ...
-# $ fcd4        : num  106 378 131 574 792 280 679 615 242 278 ...
-# $ brna        : num  3 2.5 4.1 4.4 1.9 4.2 4.2 5.1 5.1 2.7 ...
-# $ frna        : num  1.3 1.3 1.7 1.9 1.3 1.7 1.3 1.7 4.1 1.7 ...
-# $ bweight     : num  42 57 70 64 52 59 62 78 82 85 ...
-# $ fweight     : num  43 60 75 66 55 56 60 68 82 80 ...
-# $ therapy        : num  3 2 2 2 2 3 2 3 2 2 ...
-# $ response    : num  53.6 55.3 50 50 76 ...
-# $ dreaction   : num  3 4 2 3 5 2 3 4 1 3 ...
+# $ id      : num  1 2 3 4 5 6 7 8 9 10 ...
+# $ sex     : num  1 1 2 2 1 1 1 2 1 2 ...
+# $ bcd4    : num  148 145 78 295 397 155 303 370 210 120 ...
+# $ fcd4    : num  106 378 131 574 792 280 679 615 242 278 ...
+# $ brna    : num  3 2.5 4.1 4.4 1.9 4.2 4.2 5.1 5.1 2.7 ...
+# $ frna    : num  1.3 1.3 1.7 1.9 1.3 1.7 1.3 1.7 4.1 1.7 ...
+# $ bweight : num  42 57 70 64 52 59 62 78 82 85 ...
+# $ fweight : num  43 60 75 66 55 56 60 68 82 80 ...
+# $ therapy : num  3 2 2 2 2 3 2 3 2 2 ...
+# $ response: num  53.6 55.3 50 50 76 ...
+# $ reaction: num  3 4 2 3 5 2 3 4 1 3 ...
 
 
 
@@ -140,13 +166,18 @@ summary(dataset1)
 # Mean   :3.773   Mean   :2.164   Mean   : 63.66   Mean   : 64.34
 # 3rd Qu.:4.700   3rd Qu.:2.500   3rd Qu.: 71.00   3rd Qu.: 72.00
 # Max.   :6.500   Max.   :6.300   Max.   :125.00   Max.   :120.00
-# therapy          response      dreaction
+# therapy          response      reaction
 # Min.   :1.000   Min.   :30.00   Min.   :1.000
 # 1st Qu.:2.000   1st Qu.:50.99   1st Qu.:3.000
 # Median :3.000   Median :57.84   Median :4.000
 # Mean   :2.634   Mean   :60.85   Mean   :3.859
 # 3rd Qu.:3.000   3rd Qu.:71.00   3rd Qu.:5.000
 # Max.   :3.000   Max.   :86.00   Max.   :5.000
+
+if(!require(caret)) install.packages("caret", repos = "http://cran.us.r-project.org")
+library(caret)
+nearZeroVar(dataset1)
+# integer(0)
 
 if(!require(corrplot)) install.packages("corrplot", repos = "http://cran.us.r-project.org")
 library(corrplot)
@@ -156,7 +187,7 @@ corrplot(cor(dataset1), method = "square", diag = FALSE, addCoef.col = "gray", t
 # response is highly correlated with drug reaction as expected
 
 dataset1 |>
-  ggplot(aes(bcd4, response, color = factor(dreaction))) +
+  ggplot(aes(bcd4, response, color = factor(reaction))) +
   geom_point() +
   geom_smooth(color = "black", size = 0.5, method = "lm", se = FALSE) +
   scale_x_continuous("Baseline CD4 Count", limits = c(0, 2000)) +
@@ -164,7 +195,7 @@ dataset1 |>
   scale_color_manual(name = "drug reaction", values = c("tomato4", "orange3", "yellow3", "green4", "dodgerblue4"))
 
 dataset1 |>
-  ggplot(aes(fcd4, response, color = factor(dreaction))) +
+  ggplot(aes(fcd4, response, color = factor(reaction))) +
   geom_point() +
   geom_smooth(color = "black", size = 0.5, method = "lm", se = FALSE) +
   scale_x_continuous("Follow-up CD4 Count", limits = c(0, 2000)) +
@@ -174,7 +205,7 @@ dataset1 |>
 # there is a general increase in CD4 count at follow-up
 
 dataset1 |>
-  ggplot(aes(brna, response, color = factor(dreaction))) +
+  ggplot(aes(brna, response, color = factor(reaction))) +
   geom_point() +
   geom_smooth(color = "black", size = 0.5, method = "lm", se = FALSE) +
   scale_x_continuous("Baseline RNA Load", limits = c(1, 7)) +
@@ -182,7 +213,7 @@ dataset1 |>
   scale_color_manual(name = "drug reaction", values = c("tomato4", "orange3", "yellow3", "green4", "dodgerblue4"))
 
 dataset1 |>
-  ggplot(aes(frna, response, color = factor(dreaction))) +
+  ggplot(aes(frna, response, color = factor(reaction))) +
   geom_point() +
   geom_smooth(color = "black", size = 0.5, method = "lm", se = FALSE) +
   scale_x_continuous("Follow-up RNA Load", limits = c(1, 7)) +
@@ -192,10 +223,10 @@ dataset1 |>
 # there is a general decrease in RNA load at follow-up
 
 dataset2 <- dataset1 |>
-  select(bcd4, fcd4, brna, frna, dreaction) |> # keeps CD4 count and RNA load as predictors and drug reaction as outcome
-  mutate(dreaction = factor(dreaction))
-head(dataset2)
-# bcd4 fcd4 brna frna dreaction
+  select(bcd4, fcd4, brna, frna, reaction) |> # keeps CD4 count and RNA load as predictors and drug reaction as outcome
+  mutate(reaction = factor(reaction))
+head(dataset2, n = 5)
+# bcd4 fcd4 brna frna reaction
 # 1  148  106  3.0  1.3            3
 # 2  145  378  2.5  1.3            4
 # 3   78  131  4.1  1.7            2
@@ -208,19 +239,17 @@ str(dataset2)
 # $ fcd4        : num  106 378 131 574 792 280 679 615 242 278 ...
 # $ brna        : num  3 2.5 4.1 4.4 1.9 4.2 4.2 5.1 5.1 2.7 ...
 # $ frna        : num  1.3 1.3 1.7 1.9 1.3 1.7 1.3 1.7 4.1 1.7 ...
-# $ dreaction: Factor w/ 5 levels "1","2","3","4",..: 3 4 2 3 5 2 3 4 1 3 ...
+# $ reaction: Factor w/ 5 levels "1","2","3","4",..: 3 4 2 3 5 2 3 4 1 3 ...
 
 
 
 # we partition dataset2
 
 options(digits = 3)
-if(!require(caret)) install.packages("caret", repos = "http://cran.us.r-project.org")
-library(caret)
 set.seed(20, sample.kind = "Rounding") # if using R 3.6 or later
 # set.seed(20) # if using R 3.5 or earlier
 # for reproducibility during assessment
-test_index <- createDataPartition(dataset2$dreaction, p = 0.2, list = FALSE)
+test_index <- createDataPartition(dataset2$reaction, p = 0.2, list = FALSE)
 train_set <- dataset2[-test_index,]
 test_set <- dataset2[test_index,]
 
@@ -230,7 +259,7 @@ test_set <- dataset2[test_index,]
 
 set.seed(30, sample.kind = "Rounding") # if using R 3.6 or later
 # set.seed(30) # if using R 3.5 or earlier
-knn_model <- train(dreaction ~ ., train_set, method = "knn", tuneGrid = data.frame(k = seq(10, 30, 1))) # tunes neighbor number
+knn_model <- train(reaction ~ ., train_set, method = "knn", tuneGrid = data.frame(k = seq(10, 30, 1))) # tunes neighbor number
 ggplot(knn_model, highlight = TRUE)
 knn_model
 # k-Nearest Neighbors
@@ -270,8 +299,8 @@ knn_model
 # Accuracy was used to select the optimal model using the largest value.
 # The final value used for the model was k = 23.
 
-knn_dreaction <- predict(knn_model, test_set)
-confusionMatrix(knn_dreaction, test_set$dreaction)
+knn_reaction <- predict(knn_model, test_set)
+confusionMatrix(knn_reaction, test_set$reaction)
 # Confusion Matrix and Statistics
 #
 #           Reference
@@ -311,7 +340,7 @@ confusionMatrix(knn_dreaction, test_set$dreaction)
 
 set.seed(40, sample.kind = "Rounding") # if using R 3.6 or later
 # set.seed(40) # if using R 3.5 or earlier
-rpart_model <- train(dreaction ~ ., train_set, method = "rpart", tuneGrid = data.frame(cp = seq(0, 0.1, 0.01))) # tunes tree complexity
+rpart_model <- train(reaction ~ ., train_set, method = "rpart", tuneGrid = data.frame(cp = seq(0, 0.1, 0.01))) # tunes tree complexity
 ggplot(rpart_model, highlight = TRUE)
 rpart_model
 # CART
@@ -344,8 +373,8 @@ rpart_model
 plot(rpart_model$finalModel, margin = 0.05) # margin adjusts the plot size
 text(rpart_model$finalModel, cex = 1) # cex adjusts the label size
 
-rpart_dreaction <- predict(rpart_model, test_set)
-confusionMatrix(rpart_dreaction, test_set$dreaction)
+rpart_reaction <- predict(rpart_model, test_set)
+confusionMatrix(rpart_reaction, test_set$reaction)
 # Confusion Matrix and Statistics
 #
 #           Reference
@@ -389,7 +418,7 @@ if(!require(Rborist)) install.packages("Rborist", repos = "http://cran.us.r-proj
 library(Rborist)
 set.seed(50, sample.kind = "Rounding") # if using R 3.6 or later
 # set.seed(50) # if using R 3.5 or earlier
-rborist_model <- train(dreaction ~ ., train_set, method = "Rborist", tuneGrid = expand.grid(predFixed = seq(1, 4), minNode = seq(1, 4))) # tunes combinations of predictor number and node size
+rborist_model <- train(reaction ~ ., train_set, method = "Rborist", tuneGrid = expand.grid(predFixed = seq(1, 4), minNode = seq(1, 4))) # tunes combinations of predictor number and node size
 ggplot(rborist_model, highlight = TRUE)
 rborist_model
 # Random Forest
@@ -435,8 +464,8 @@ varImp(rborist_model)
 
 # baseline RNA load is the most important predictor
 
-rborist_dreaction <- predict(rborist_model, test_set)
-confusionMatrix(rborist_dreaction, test_set$dreaction)
+rborist_reaction <- predict(rborist_model, test_set)
+confusionMatrix(rborist_reaction, test_set$reaction)
 # Confusion Matrix and Statistics
 #
 #           Reference
@@ -478,7 +507,7 @@ confusionMatrix(rborist_dreaction, test_set$dreaction)
 
 set.seed(60, sample.kind = "Rounding") # if using R 3.6 or later
 # set.seed(60) # if using R 3.5 or earlier
-qda_model <- train(dreaction ~ ., train_set, method = "qda")
+qda_model <- train(reaction ~ ., train_set, method = "qda")
 qda_model
 # Quadratic Discriminant Analysis
 #
@@ -494,8 +523,8 @@ qda_model
 #   Accuracy  Kappa
 # 0.724     0.602
 
-qda_dreaction <- predict(qda_model, test_set)
-confusionMatrix(qda_dreaction, test_set$dreaction)
+qda_reaction <- predict(qda_model, test_set)
+confusionMatrix(qda_reaction, test_set$reaction)
 # Confusion Matrix and Statistics
 #
 #           Reference
@@ -536,9 +565,9 @@ confusionMatrix(qda_dreaction, test_set$dreaction)
 
 # we examine the errors of the Rborist model
 
-which_index <- c(which(rborist_dreaction != test_set$dreaction))
+which_index <- c(which(rborist_reaction != test_set$reaction))
 # [1] 138
-tibble(rborist = rborist_dreaction[which_index], rpart = rpart_dreaction[which_index], qda = qda_dreaction[which_index], knn = knn_dreaction[which_index], test_set = test_set$dreaction[which_index]) |> print(n = 40)
+tibble(rborist = rborist_reaction[which_index], rpart = rpart_reaction[which_index], qda = qda_reaction[which_index], knn = knn_reaction[which_index], test_set = test_set$reaction[which_index]) |> print(n = 40)
 # A tibble: 1 × 5
 #   rborist rpart qda   knn   test_set
 #   <fct>   <fct> <fct> <fct> <fct>
@@ -552,7 +581,7 @@ tibble(rborist = rborist_dreaction[which_index], rpart = rpart_dreaction[which_i
 
 set.seed(70, sample.kind = "Rounding") # if using R 3.6 or later
 # set.seed(70) # if using R 3.5 or earlier
-rborist_model1 <- train(dreaction ~ bcd4 + brna, train_set, method = "Rborist", tuneGrid = expand.grid(predFixed = seq(1, 2), minNode = seq(1, 4)))
+rborist_model1 <- train(reaction ~ bcd4 + brna, train_set, method = "Rborist", tuneGrid = expand.grid(predFixed = seq(1, 2), minNode = seq(1, 4)))
 ggplot(rborist_model1, highlight = TRUE)
 rborist_model1
 # Random Forest
@@ -579,8 +608,8 @@ rborist_model1
 # Accuracy was used to select the optimal model using the largest value.
 # The final values used for the model were predFixed = 1 and minNode = 4.
 
-rborist_dreaction1 <- predict(rborist_model1, test_set)
-confusionMatrix(rborist_dreaction1, test_set$dreaction)
+rborist_reaction1 <- predict(rborist_model1, test_set)
+confusionMatrix(rborist_reaction1, test_set$reaction)
 # Confusion Matrix and Statistics
 #
 # Reference
