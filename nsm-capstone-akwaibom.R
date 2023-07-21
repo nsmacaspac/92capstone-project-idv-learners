@@ -1,7 +1,8 @@
-# ???
+# CLASSIFICATION MODEL ON ANTIRETROVIRAL THERAPY REACTION AND FAILURE DEVELOPED ON THE UNIQUE RECORDS OF THE AKWA IBOM HIV DATABASE
 # NICELLE SERNADILLA MACASPAC
 # JULY 2023
-# RUNNING TIME: ??? minutes
+# R VERSION: 4.3
+# RUNNING TIME: 4 minutes
 
 
 
@@ -13,7 +14,7 @@ if(!file.exists("mmc1.xlsx")) download.file("https://www.ncbi.nlm.nih.gov/pmc/ar
 if(!require(readxl)) install.packages("readxl", repos = "http://cran.us.r-project.org")
 library(readxl)
 dataset <- as.data.frame(read_xlsx("mmc1.xlsx", range = "N27:AB1083")) # range reads the Unique Records table, which is the combined version of the Individual Treatment Change Episodes table
-head(dataset)
+head(dataset) # fig1 in the Rmd file
 # PID SEX BCD4 FCD4 BRNA FRNA BWt(kg) FWt(kg)    DRUGCOMB       PR C1 C2 C3 C4 C5
 # 1   1   F  148  106  3.0  1.3      42      43 TDF+3TC+EFV 53.56199  0  0  1  0  0
 # 2   2   F  145  378  2.5  1.3      57      60 AZT+3TC+NVP 55.33422  0  0  0  1  0
@@ -40,10 +41,9 @@ str(dataset)
 # $ C5      : num  0 0 0 0 1 0 0 0 0 0 ...
 
 
-
 # we render the dataset into tidy format and numeric
 
-colnames(dataset) <- c("id", "sex", "bcd4", "fcd4", "brna", "frna", "bweight", "fweight", "drug", "response", "dreaction1", "dreaction2", "dreaction3", "dreaction4", "dreaction5")
+colnames(dataset) <- c("id", "sex", "bcd4", "fcd4", "brna", "frna", "bweight", "fweight", "therapy", "response", "dreaction1", "dreaction2", "dreaction3", "dreaction4", "dreaction5")
 str(dataset)
 # 'data.frame':	1056 obs. of  15 variables:
 # $ id           : num  1 2 3 4 5 6 7 8 9 10 ...
@@ -54,7 +54,7 @@ str(dataset)
 # $ frna         : num  1.3 1.3 1.7 1.9 1.3 1.7 1.3 1.7 4.1 1.7 ...
 # $ bweight      : num  42 57 70 64 52 59 62 78 82 85 ...
 # $ fweight      : num  43 60 75 66 55 56 60 68 82 80 ...
-# $ drug         : chr  "TDF+3TC+EFV" "AZT+3TC+NVP" "AZT+3TC+NVP" "AZT+3TC+NVP" ...
+# $ therapy         : chr  "TDF+3TC+EFV" "AZT+3TC+NVP" "AZT+3TC+NVP" "AZT+3TC+NVP" ...
 # $ response     : num  53.6 55.3 50 50 76 ...
 # $ dreaction1   : num  0 0 0 0 0 0 0 0 1 0 ...
 # $ dreaction2   : num  0 0 1 0 0 1 0 0 0 0 ...
@@ -77,10 +77,10 @@ dataset |>
 # 2 M       352
 
 dataset |>
-  group_by(drug) |>
+  group_by(therapy) |>
   summarize(n())
 # A tibble: 3 × 2
-# drug    `n()`
+# therapy    `n()`
 # <chr>       <int>
 # 1 AZT+3TC+EFV    28
 # 2 AZT+3TC+NVP   330
@@ -98,9 +98,9 @@ sum(dataset$dreaction1) +
 
 dataset1 <- dataset |>
   mutate(sex = ifelse(sex == "F", 1, 2)) |>
-  mutate(drug = case_when(drug == "AZT+3TC+EFV" ~ 1,
-                          drug == "AZT+3TC+NVP" ~ 2,
-                          drug == "TDF+3TC+EFV" ~ 3)) |> # relabels drugs as 1-3
+  mutate(therapy = case_when(therapy == "AZT+3TC+EFV" ~ 1,
+                          therapy == "AZT+3TC+NVP" ~ 2,
+                          therapy == "TDF+3TC+EFV" ~ 3)) |> # relabels therapies as 1-3
   mutate(dreaction = case_when(dreaction1 == 1 ~ 1,
                                dreaction2 == 1 ~ 2,
                                dreaction3 == 1 ~ 3,
@@ -117,7 +117,7 @@ str(dataset1)
 # $ frna        : num  1.3 1.3 1.7 1.9 1.3 1.7 1.3 1.7 4.1 1.7 ...
 # $ bweight     : num  42 57 70 64 52 59 62 78 82 85 ...
 # $ fweight     : num  43 60 75 66 55 56 60 68 82 80 ...
-# $ drug        : num  3 2 2 2 2 3 2 3 2 2 ...
+# $ therapy        : num  3 2 2 2 2 3 2 3 2 2 ...
 # $ response    : num  53.6 55.3 50 50 76 ...
 # $ dreaction   : num  3 4 2 3 5 2 3 4 1 3 ...
 
@@ -140,7 +140,7 @@ summary(dataset1)
 # Mean   :3.773   Mean   :2.164   Mean   : 63.66   Mean   : 64.34
 # 3rd Qu.:4.700   3rd Qu.:2.500   3rd Qu.: 71.00   3rd Qu.: 72.00
 # Max.   :6.500   Max.   :6.300   Max.   :125.00   Max.   :120.00
-# drug          response      dreaction
+# therapy          response      dreaction
 # Min.   :1.000   Min.   :30.00   Min.   :1.000
 # 1st Qu.:2.000   1st Qu.:50.99   1st Qu.:3.000
 # Median :3.000   Median :57.84   Median :4.000
@@ -161,7 +161,7 @@ dataset1 |>
   geom_smooth(color = "black", size = 0.5, method = "lm", se = FALSE) +
   scale_x_continuous("Baseline CD4 Count", limits = c(0, 2000)) +
   scale_y_continuous("Response", limits = c(30, 110)) + # encompasses the limits of the axes of both baseline and follow-up data for ease of comparison
-  scale_color_manual(name = "Drug Reaction", values = c("tomato4", "orange3", "yellow3", "green4", "dodgerblue4"))
+  scale_color_manual(name = "drug reaction", values = c("tomato4", "orange3", "yellow3", "green4", "dodgerblue4"))
 
 dataset1 |>
   ggplot(aes(fcd4, response, color = factor(dreaction))) +
@@ -169,7 +169,7 @@ dataset1 |>
   geom_smooth(color = "black", size = 0.5, method = "lm", se = FALSE) +
   scale_x_continuous("Follow-up CD4 Count", limits = c(0, 2000)) +
   scale_y_continuous("Response", limits = c(30, 110)) +
-  scale_color_manual(name = "Drug Reaction", values = c("tomato4", "orange3", "yellow3", "green4", "dodgerblue4"))
+  scale_color_manual(name = "drug reaction", values = c("tomato4", "orange3", "yellow3", "green4", "dodgerblue4"))
 # CD4 count is positively correlated with response and drug reaction
 # there is a general increase in CD4 count at follow-up
 
@@ -179,7 +179,7 @@ dataset1 |>
   geom_smooth(color = "black", size = 0.5, method = "lm", se = FALSE) +
   scale_x_continuous("Baseline RNA Load", limits = c(1, 7)) +
   ylab("Response") +
-  scale_color_manual(name = "Drug Reaction", values = c("tomato4", "orange3", "yellow3", "green4", "dodgerblue4"))
+  scale_color_manual(name = "drug reaction", values = c("tomato4", "orange3", "yellow3", "green4", "dodgerblue4"))
 
 dataset1 |>
   ggplot(aes(frna, response, color = factor(dreaction))) +
@@ -187,7 +187,7 @@ dataset1 |>
   geom_smooth(color = "black", size = 0.5, method = "lm", se = FALSE) +
   scale_x_continuous("Follow-up RNA Load", limits = c(1, 7)) +
   ylab("Response") +
-  scale_color_manual(name = "Drug Reaction", values = c("tomato4", "orange3", "yellow3", "green4", "dodgerblue4"))
+  scale_color_manual(name = "drug reaction", values = c("tomato4", "orange3", "yellow3", "green4", "dodgerblue4"))
 # RNA load is negatively correlated with response and drug reaction
 # there is a general decrease in RNA load at follow-up
 
@@ -538,7 +538,7 @@ confusionMatrix(qda_dreaction, test_set$dreaction)
 
 which_index <- c(which(rborist_dreaction != test_set$dreaction))
 # [1] 138
-tibble(rborist = rborist_dreaction[which_index], rpart = rpart_dreaction[which_index], qda = qda_dreaction[which_index], knn = knn_dreaction[which_index], test_set = test_set$dreaction[which_index])
+tibble(rborist = rborist_dreaction[which_index], rpart = rpart_dreaction[which_index], qda = qda_dreaction[which_index], knn = knn_dreaction[which_index], test_set = test_set$dreaction[which_index]) |> print(n = 40)
 # A tibble: 1 × 5
 #   rborist rpart qda   knn   test_set
 #   <fct>   <fct> <fct> <fct> <fct>

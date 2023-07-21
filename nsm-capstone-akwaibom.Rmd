@@ -1,5 +1,5 @@
 ---
-title: "Antiretroviral Therapy Reaction and Failure Predictive Model Developed on the Akwa Ibom Dataset"
+title: "Classification Model on Antiretroviral Therapy Reaction and Failure Developed on the Unique Records of the Akwa Ibom HIV Database"
 author: "Nicelle Sernadilla Macaspac"
 date: "July 2023"
 output: pdf_document
@@ -23,7 +23,28 @@ opts_chunk$set(
 ## Introduction
 
 
-## Akwa Ibom Dataset
+This undertaking is part of the capstone in the [Professional Certificate Program in Data Science of Harvard Online](https://www.harvardonline.harvard.edu/course/data-science-professional-certificate). The corresponding R Markdown and R files are in the [GitHub of nsmacaspac](https://github.com/nsmacaspac/91capstone-project-all-learners).
+
+
+## Unique Records of the Akwa Ibom HIV Database
+
+
+In a previous study on patient response to antiretroviral therapy, Ekpenyong, Etebong, and Jackson (2019, 3) used a database of patients who received treatment for HIV from 13 health centers in Akwa Ibom, Nigeria, between 2015 and 2018. Two years later, they published the processed dataset (mmc1.xlsx; Ekpenyong et al. 2021, 5) with minor oversight in the accompanying article, which were easily reconciled through the 2019 study and were appropriately referenced throughout this project. The processed dataset was composed of an Individual Treatment Change Episodes table with a column for each antiretroviral drug administered and a concatenated Unique Records table with the drugs combined into a column for each antiretroviral therapy of three drugs administered. For the purpose of this project, we will utilize only the Unique Records table.
+
+The Unique Records table was imported with the corresponding read_xlsx function in the language R. The dataset was composed of 1,056 patient records, each with 15 variables: patient identification, sex, baseline CD4 count, follow-up CD4 count, baseline RNA load, follow-up RNA load, baseline weight, follow-up weight, drug combination, and patient response and reaction classifications 1 to 5 (fig. 1). The immunological marker CD4 counts were given in cells/mm^3^ (Ekpenyong et al. 2021, 8). The viral RNA loads were expressed in times 10^2^ copies (Ekpenyong, Etebong, and Jackson 2019, 10). The weights ranged from 4.7 to 125 kg on account of the presence of pediatric patients (Ekpenyong, Etebong, and Jackson 2019, 2). The three-drug combinations of antiretroviral therapy were a complementary mix of nucleoside reverse transcriptase inhibitors tenofovir (TDF), lamivudine (3TC) and zidovudine (AZT), and non-nucleoside reverse transcriptase inhibitors efavirenz (EFV) and nivarapine (NVP) given in the first 6 months of treatment (Ekpenyong et al. 2021, 8). Patient response and reaction to the drugs were quantified and classified as very high interaction (C1), high interaction (C2), low interaction (C3), very low interaction (C4), and no interaction (C5) in the 2019 study using the advanced method of interval type-2 fuzzy logic system (Ekpenyong, Etebong, and Jackson 2019, 11). Very high and high interactions signified treatment failure (Ekpenyong, Etebong, and Jackson 2019, 10).
+
+```{r}
+options(timeout = 120) # timeout in seconds for some Internet operations
+if(!file.exists("mmc1.xlsx")) download.file("https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8142042/bin/mmc1.xlsx", "mmc1.xlsx")
+
+if(!require(readxl)) install.packages("readxl", repos = "http://cran.us.r-project.org")
+library(readxl)
+dataset <- as.data.frame(read_xlsx("mmc1.xlsx", range = "N27:AB1083")) # range reads the Unique Records table, which is the combined version of the Individual Treatment Change Episodes table
+```
+
+```{r fig1, fig.cap = "First rows of the Unique Records table."}
+include_graphics("fig1.png")
+```
 
 
 ## Tidy and Preprocessed Dataset
@@ -35,13 +56,18 @@ opts_chunk$set(
 ### _RNA Load_
 
 
-### _Drug Reaction_
 
 
 ## Predictive Modeling
 
 
+- why this partition
+
+
 ### _k-Nearest Neighbor Model_
+
+
+- why this model
 
 
 ### _Recursive Partitioning and Regression Trees Model_
@@ -60,4 +86,14 @@ opts_chunk$set(
 
 
 ## References
+
+
+Ekpenyong, Moses E., Mercy E. Edoho, Ifiok J. Udo, Philip I. Etebong, Nseobong P. Uto, Tenderwealth C. Jackson, and Nkem M. Obiakor. 2021. "A Transfer Learning Approach to Drug Resistance Classification in Mixed
+HIV Dataset." _Informatics in Medicine Unlocked_ 24: 100568. [https://doi.org/10.1016/j.imu.2021.100568](https://doi.org/10.1016/j.imu.2021.100568).
+
+Ekpenyong, Moses E., Philip I. Etebong, and Tenderwealth C. Jackson. 2019."Fuzzy-Multidimensional Deep Learning for Efficient Prediction of Patient Response to Antiretroviral Therapy." _Heliyon_ 5: e02080. [https://doi.org/10.1016/j.heliyon.2019.e02080](https://doi.org/10.1016/j.heliyon.2019.e02080).
+
+Ekpenyong, Moses E., Philip I. Etebong, Tenderwealth C. Jackson, and Edidiong J. Udofa. 2021."Processed HIV Prognostic Dataset for Control Experiments." _Data in Brief_ 36: 107147. [https://doi.org/10.1016/j.dib.2021.107147](https://doi.org/10.1016/j.dib.2021.107147).
+
+Irizarry, Rafael A. 2002. _Introduction to Data Science: Data Analysis and Prediction Algorithms with R_. [http://rafalab.dfci.harvard.edu/dsbook/](http://rafalab.dfci.harvard.edu/dsbook/).
 
