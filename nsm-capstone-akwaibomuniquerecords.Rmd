@@ -31,7 +31,7 @@ This undertaking is part of the capstone in the [Professional Certificate Progra
 
 In a previous study on patient response to antiretroviral therapy, Ekpenyong, Etebong, and Jackson (2019, 3) used a database of patients who received treatment for HIV from thirteen health centers in Akwa Ibom, Nigeria, between 2015 and 2018. Two years later, they published the processed dataset (Ekpenyong et al. 2021b, Appendix) with minor oversight in the accompanying article, which were easily reconciled through the 2019 study and were appropriately referenced throughout this project. The processed dataset was composed of an Individual Treatment Change Episodes table with a column for each antiretroviral drug administered and a concatenated Unique Records table with the drugs combined into a column for each antiretroviral therapy of three drugs administered. For the purpose of this project, we utilize only the Unique Records table.
 
-The Unique Records table was imported with the corresponding read_xlsx function in the language R. The dataset was composed of 1,056 patient records, each with 15 variables: patient identification, sex, baseline CD4 count, follow-up CD4 count, baseline RNA load, follow-up RNA load, baseline weight, follow-up weight, drug combination, and patient response and drug reaction classifications 1 to 5 (fig. 1). The immunological marker CD4 counts were given in cells per cubic millimeter (Ekpenyong et al. 2021a, 8). The viral RNA loads were expressed in times 10^2^ copies (Ekpenyong, Etebong, and Jackson 2019, 10). The weights ranged from 4.7 to 125 kg on account of the presence of pediatric patients (Ekpenyong, Etebong, and Jackson 2019, 2). The three-drug combinations of antiretroviral therapy were a complementary mix of nucleoside reverse transcriptase inhibitors tenofovir (TDF), lamivudine (3TC) and zidovudine (AZT), and non-nucleoside reverse transcriptase inhibitors efavirenz (EFV) and nivarapine (NVP) given in the first 6 months of treatment (Ekpenyong et al. 2021a, 8). Patient response and reaction to the drugs were quantified and classified with a binary system as very high interaction (C1), high interaction (C2), low interaction (C3), very low interaction (C4), and no interaction (C5) in the 2019 study using the advanced method of interval type-2 fuzzy logic system (Ekpenyong, Etebong, and Jackson 2019, 11). Very high and high interactions signified treatment failure as well (Ekpenyong, Etebong, and Jackson 2019, 10).
+The Unique Records table was imported with the corresponding read_xlsx function in the language R. The dataset was composed of 1,056 patient records, each with 15 columns: patient identification, sex, baseline CD4 count, follow-up CD4 count, baseline RNA load, follow-up RNA load, baseline weight, follow-up weight, drug combination, and patient response and drug reaction classifications 1 to 5 (fig. 1). The immunological marker CD4 counts were given in cells per cubic millimeter (Ekpenyong et al. 2021a, 8). The viral RNA loads were expressed in times 10^2^ copies (Ekpenyong, Etebong, and Jackson 2019, 10). The weights ranged from 4.7 to 125 kg on account of the presence of pediatric patients (Ekpenyong, Etebong, and Jackson 2019, 2). The three-drug combinations of antiretroviral therapy were a complementary mix of nucleoside reverse transcriptase inhibitors tenofovir (TDF), lamivudine (3TC) and zidovudine (AZT), and non-nucleoside reverse transcriptase inhibitors efavirenz (EFV) and nivarapine (NVP) given in the first 6 months of treatment (Ekpenyong et al. 2021a, 8). Patient response and reaction to the drugs were quantified and classified in the 2019 study using the advanced method of interval type-2 fuzzy logic system. The drug reaction classification used a binary system to indicate very high interaction (C1), high interaction (C2), low interaction (C3), very low interaction (C4), and no interaction (C5; Ekpenyong, Etebong, and Jackson 2019, 11). Very high and high interactions signified treatment failure as well (Ekpenyong, Etebong, and Jackson 2019, 10).
 
 ```{r}
 options(timeout = 120) # timeout in seconds for some Internet operations
@@ -47,20 +47,43 @@ include_graphics("fig1.png")
 ```
 
 
-## Tidy and Preprocessed Dataset
+### _Tidy Dataset_
 
 
-The dataset was prepared for preprocessing by rendering it into tidy and numeric format. The fifteen variables were renamed for consistency with their aforementioned descriptions, with vhi_tf corresponding to very high interaction_treatment failure and ni corresponding to no interaction. Missing values were not detected.
-
-```{r}
-colnames(dataset) <- c("id", "sex", "bcd4", "fcd4", "brna", "frna", "bweight", "fweight", "therapy", "response", "vhi_tf", "hi_tf", "li", "vli", "ni")
-```
+The dataset was rendered into tidy format to prepare it for preprocessing. The fifteen columns were renamed consistently with their aforementioned descriptions, with vhi_tf corresponding to very high interaction_treatment failure and ni corresponding to no interaction. Missing values were not detected.
 
 ```{r, echo = TRUE}
+colnames(dataset) <- c("id", "sex", "bcd4", "fcd4", "brna", "frna", "bweight", "fweight", "therapy", "response", "vhi_tf", "hi_tf", "li", "vli", "ni")
 head(dataset, n = 5)
 ```
 
-The sex and therapy variables were changed from character to numeric format using the case_when function. The brna and frna variables were multiplied by 10^2^ to align with the unit used for viral RNA load in the WHO definition of HIV (WHO, n.d.). The vhi_tf, hi_tf, li, vli, and ni variables were verified to have only one value per row. Hence, they were merged under a newly defined reaction variable then relabeled as 5 (vhi_tf) to 1 (ni). This brought the number of variables down to eleven.
+The brna and frna columns were multiplied by 10^2^ to simplify the unit from times 10^2^ copies to just copies. This aligns them with the unit used for viral RNA load in the WHO definition of HIV (World Health Organization, n.d.).
+
+The vhi_tf, hi_tf, li, vli, and ni columns were verified to have only one value per row. Hence, the binary system was relabeled as vhi_tf to ni and merged under a newly defined reaction column. This brought down the number of columns to eleven.
+
+```{r}
+if(!require(tidyverse)) install.packages("tidyverse", repos = "http://cran.us.r-project.org")
+library(tidyverse)
+```
+
+```{r, echo = TRUE}
+dataset1 <- dataset |>
+  mutate(brna = brna*10^2) |>
+  mutate(frna = frna*10^2) |> # simplifies the unit from times 10^2 copies to just copies
+  mutate(reaction = case_when(vhi_tf == 1 ~ "vhi_tf",
+                              hi_tf == 1 ~ "hi_tf",
+                              li == 1 ~ "li",
+                              vli == 1 ~ "vli",
+                              ni == 1 ~ "ni")) |> # relabels drug reactions as vhi_tf to ni and merges them under a newly defined reaction column
+  select(-vhi_tf, -hi_tf, -li, -vli, -ni)
+head(dataset1, n = 5)
+```
+
+
+## _Preprocessed Dataset_
+
+
+The sex and therapy variables were changed from character to numeric format using the case_when function. 
 
 ```{r}
 if(!require(tidyverse)) install.packages("tidyverse", repos = "http://cran.us.r-project.org")
@@ -91,7 +114,7 @@ head(dataset1, n = 5)
 
 
 
-Given that all values were then in numeric format, the correlation of the variables was examined using the corrplot function (fig. 2).
+Given that all values were then in numeric format, the correlation of the variables was examined using the corrplot function (fig. 2; Wei and Simko 2021).
 
 -the distribution summaries 
 -the variance
@@ -156,4 +179,7 @@ Ekpenyong, Moses E., Philip I. Etebong, Tenderwealth C. Jackson, and Edidiong J.
 
 Irizarry, Rafael A. 2002. _Introduction to Data Science: Data Analysis and Prediction Algorithms with R_. [http://rafalab.dfci.harvard.edu/dsbook/](http://rafalab.dfci.harvard.edu/dsbook/).
 
-WHO, n.d. "HIV." Accessed July 21, 2023. [https://www.who.int/health-topics/hiv-aids#tab=tab_1](https://www.who.int/health-topics/hiv-aids#tab=tab_1).
+Wei, Taiyun, and Viliam Simko. 2021. "An Introduction to corrplot Package." Last modified November 18, 2021. [https://cran.r-project.org/web/packages/corrplot/vignettes/corrplot-intro.html](https://cran.r-project.org/web/packages/corrplot/vignettes/corrplot-intro.html).
+
+World Health Organization, n.d. "HIV." Accessed July 21, 2023. [https://www.who.int/health-topics/hiv-aids#tab=tab_1](https://www.who.int/health-topics/hiv-aids#tab=tab_1).
+

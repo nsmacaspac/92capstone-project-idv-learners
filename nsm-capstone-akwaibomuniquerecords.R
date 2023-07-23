@@ -45,7 +45,7 @@ str(dataset)
 
 
 
-# we render the dataset into tidy and numeric format
+# we render the dataset into tidy format
 
 colnames(dataset) <- c("id", "sex", "bcd4", "fcd4", "brna", "frna", "bweight", "fweight", "therapy", "response", "vhi_tf", "hi_tf", "li", "vli", "ni")
 head(dataset, n = 5)
@@ -61,29 +61,76 @@ head(dataset, n = 5)
 # 3   0  0
 # 4   0  0
 # 5   0  1
-str(dataset)
-# 'data.frame':	1056 obs. of  15 variables:
-# $ id      : num  1 2 3 4 5 6 7 8 9 10 ...
-# $ sex     : chr  "F" "F" "M" "M" ...
-# $ bcd4    : num  148 145 78 295 397 155 303 370 210 120 ...
-# $ fcd4    : num  106 378 131 574 792 280 679 615 242 278 ...
-# $ brna    : num  3 2.5 4.1 4.4 1.9 4.2 4.2 5.1 5.1 2.7 ...
-# $ frna    : num  1.3 1.3 1.7 1.9 1.3 1.7 1.3 1.7 4.1 1.7 ...
-# $ bweight : num  42 57 70 64 52 59 62 78 82 85 ...
-# $ fweight : num  43 60 75 66 55 56 60 68 82 80 ...
-# $ therapy : chr  "TDF+3TC+EFV" "AZT+3TC+NVP" "AZT+3TC+NVP" "AZT+3TC+NVP" ...
-# $ response: num  53.6 55.3 50 50 76 ...
-# $ vhi_tf  : num  0 0 0 0 0 0 0 0 1 0 ...
-# $ hi_tf   : num  0 0 1 0 0 1 0 0 0 0 ...
-# $ li      : num  1 0 0 1 0 0 1 0 0 1 ...
-# $ vli     : num  0 1 0 0 0 0 0 1 0 0 ...
-# $ ni      : num  0 0 0 0 1 0 0 0 0 0 ...
 
 sum(is.na(dataset))
 # [1] 0
 
+sum((dataset$vhi_tf + dataset$hi_tf + dataset$li + dataset$vli + dataset$ni) > 1 ) # verifies if there is >1 drug reaction per row
+# [1] 0
+sum(dataset$vhi_tf) +
+  sum(dataset$hi_tf) +
+  sum(dataset$li) +
+  sum(dataset$vli) +
+  sum(dataset$ni) # checks if drug reactions total to the number of observations
+# [1] 1056
+# there is only 1 drug reaction per row
+
 if(!require(tidyverse)) install.packages("tidyverse", repos = "http://cran.us.r-project.org")
 library(tidyverse)
+dataset1 <- dataset |>
+  mutate(brna = brna*10^2) |>
+  mutate(frna = frna*10^2) |> # simplifies the unit from times 10^2 copies to just copies
+  mutate(reaction = case_when(vhi_tf == 1 ~ "vhi_tf",
+                              hi_tf == 1 ~ "hi_tf",
+                              li == 1 ~ "li",
+                              vli == 1 ~ "vli",
+                              ni == 1 ~ "ni")) |> # relabels drug reactions as vhi_tf to ni and merges them under a newly defined reaction column
+  select(-vhi_tf, -hi_tf, -li, -vli, -ni)
+head(dataset1, n = 5)
+# id sex bcd4 fcd4 brna frna bweight fweight     therapy response reaction
+# 1  1   F  148  106  300  130      42      43 TDF+3TC+EFV 53.56199       li
+# 2  2   F  145  378  250  130      57      60 AZT+3TC+NVP 55.33422      vli
+# 3  3   M   78  131  410  170      70      75 AZT+3TC+NVP 50.00000    hi_tf
+# 4  4   M  295  574  440  190      64      66 AZT+3TC+NVP 50.00000       li
+# 5  5   F  397  792  190  130      52      55 AZT+3TC+NVP 76.00000       ni
+str(dataset1)
+# 'data.frame':	1056 obs. of  11 variables:
+# $ id      : num  1 2 3 4 5 6 7 8 9 10 ...
+# $ sex     : chr  "F" "F" "M" "M" ...
+# $ bcd4    : num  148 145 78 295 397 155 303 370 210 120 ...
+# $ fcd4    : num  106 378 131 574 792 280 679 615 242 278 ...
+# $ brna    : num  300 250 410 440 190 420 420 510 510 270 ...
+# $ frna    : num  130 130 170 190 130 170 130 170 410 170 ...
+# $ bweight : num  42 57 70 64 52 59 62 78 82 85 ...
+# $ fweight : num  43 60 75 66 55 56 60 68 82 80 ...
+# $ therapy : chr  "TDF+3TC+EFV" "AZT+3TC+NVP" "AZT+3TC+NVP" "AZT+3TC+NVP" ...
+# $ response: num  53.6 55.3 50 50 76 ...
+# $ reaction: chr  "li" "vli" "hi_tf" "li" ...
+
+
+
+###############
+###   WIP   ###
+###############
+
+
+
+# we preprocess dataset1
+
+
+
+
+mutate(sex = ifelse(sex == "F", 1, 2)) |> # relabels sexes as 1-2
+  mutate(therapy = case_when(therapy == "AZT+3TC+EFV" ~ 1,
+                             therapy == "AZT+3TC+NVP" ~ 2,
+                             therapy == "TDF+3TC+EFV" ~ 3)) |> # relabels antiretroviral therapies as 1-3
+
+
+
+
+
+
+
 dataset |>
   group_by(sex) |>
   summarize(n())
@@ -103,53 +150,6 @@ dataset |>
 # 2 AZT+3TC+NVP   330
 # 3 TDF+3TC+EFV   698
 
-sum((dataset$vhi_tf + dataset$hi_tf + dataset$li + dataset$vli + dataset$ni) > 1 ) # checks if there are >1 drug reaction per row
-# [1] 0
-sum(dataset$vhi_tf) +
-  sum(dataset$hi_tf) +
-  sum(dataset$li) +
-  sum(dataset$vli) +
-  sum(dataset$ni) # checks if drug reactions total to the number of observations
-# [1] 1056
-# there is only 1 drug reaction per row
-
-dataset1 <- dataset |>
-  mutate(sex = ifelse(sex == "F", 1, 2)) |> # relabels sexes as 1-2
-  mutate(brna = brna*10^2) |>
-  mutate(frna = frna*10^2) |>
-  mutate(therapy = case_when(therapy == "AZT+3TC+EFV" ~ 1,
-                             therapy == "AZT+3TC+NVP" ~ 2,
-                             therapy == "TDF+3TC+EFV" ~ 3)) |> # relabels antiretroviral therapies as 1-3
-  mutate(reaction = case_when(vhi_tf == 1 ~ 1,
-                              hi_tf == 1 ~ 2,
-                              li == 1 ~ 3,
-                              vli == 1 ~ 4,
-                              ni == 1 ~ 5,)) |> # relabels drug reactions as 1-5 then merges them under column reaction
-  select(-vhi_tf, -hi_tf, -li, -vli, -ni)
-head(dataset1, n = 5)
-# id sex bcd4 fcd4 brna frna bweight fweight therapy response reaction
-# 1  1   1  148  106  3.0  1.3      42      43       3 53.56199        3
-# 2  2   1  145  378  2.5  1.3      57      60       2 55.33422        4
-# 3  3   2   78  131  4.1  1.7      70      75       2 50.00000        2
-# 4  4   2  295  574  4.4  1.9      64      66       2 50.00000        3
-# 5  5   1  397  792  1.9  1.3      52      55       2 76.00000        5
-str(dataset1)
-# 'data.frame':	1056 obs. of  11 variables:
-# $ id      : num  1 2 3 4 5 6 7 8 9 10 ...
-# $ sex     : num  1 1 2 2 1 1 1 2 1 2 ...
-# $ bcd4    : num  148 145 78 295 397 155 303 370 210 120 ...
-# $ fcd4    : num  106 378 131 574 792 280 679 615 242 278 ...
-# $ brna    : num  3 2.5 4.1 4.4 1.9 4.2 4.2 5.1 5.1 2.7 ...
-# $ frna    : num  1.3 1.3 1.7 1.9 1.3 1.7 1.3 1.7 4.1 1.7 ...
-# $ bweight : num  42 57 70 64 52 59 62 78 82 85 ...
-# $ fweight : num  43 60 75 66 55 56 60 68 82 80 ...
-# $ therapy : num  3 2 2 2 2 3 2 3 2 2 ...
-# $ response: num  53.6 55.3 50 50 76 ...
-# $ reaction: num  3 4 2 3 5 2 3 4 1 3 ...
-
-
-
-# we preprocess dataset1
 
 summary(dataset1)
 # id              sex             bcd4             fcd4
