@@ -14,7 +14,7 @@ opts_chunk$set(
 	collapse = TRUE,
 	warning = FALSE,
 	message = FALSE,
-	out.width = "50%",
+	out.width = "70%",
 	fig.align = "center"
 )
 ```
@@ -31,7 +31,11 @@ This undertaking is part of the capstone in the [Professional Certificate Progra
 
 In a previous study on patient response to antiretroviral therapy, Ekpenyong, Etebong, and Jackson (2019, 3) used a database of patients who received treatment for HIV from thirteen health centers in Akwa Ibom, Nigeria, between 2015 and 2018. Two years later, they published the processed dataset (Ekpenyong et al. 2021b, Appendix) with minor oversight in the accompanying article, which were easily reconciled through the 2019 study and were appropriately referenced throughout this project. The processed dataset was composed of an Individual Treatment Change Episodes table with a column for each antiretroviral drug administered and a concatenated Unique Records table with the drugs combined into a column for each antiretroviral therapy of three drugs administered. For the purpose of this project, we utilize only the Unique Records table.
 
-The Unique Records table was imported with the corresponding read_xlsx function in the language R. The dataset was composed of 1,056 patient records, each with 15 columns: patient identification, sex, baseline CD4 count, follow-up CD4 count, baseline RNA load, follow-up RNA load, baseline weight, follow-up weight, drug combination, and patient response and drug reaction classifications 1 to 5 (fig. 1). The immunological marker CD4 counts were given in cells per cubic millimeter (Ekpenyong et al. 2021a, 8). The viral RNA loads were expressed in times 10^2^ copies (Ekpenyong, Etebong, and Jackson 2019, 10). The weights ranged from 4.7 to 125 kg on account of the presence of pediatric patients (Ekpenyong, Etebong, and Jackson 2019, 2). The three-drug combinations of antiretroviral therapy were a complementary mix of nucleoside reverse transcriptase inhibitors tenofovir (TDF), lamivudine (3TC) and zidovudine (AZT), and non-nucleoside reverse transcriptase inhibitors efavirenz (EFV) and nivarapine (NVP) given in the first 6 months of treatment (Ekpenyong et al. 2021a, 8). Patient response and drug reaction were quantified and classified in the 2019 study using the advanced method of interval type-2 fuzzy logic system. The drug reaction classification used a binary system to indicate very high interaction (C1), high interaction (C2), low interaction (C3), very low interaction (C4), and no interaction (C5; Ekpenyong, Etebong, and Jackson 2019, 11). Very high and high interactions signified treatment failure as well (Ekpenyong, Etebong, and Jackson 2019, 10).
+The Unique Records table was imported with the corresponding read_xlsx function in the language R. The dataset was composed of 1,056 patient records, each with 15 columns: patient identification, sex, baseline CD4 count, follow-up CD4 count, baseline RNA load, follow-up RNA load, baseline weight, follow-up weight, drug combination, and patient response and drug reaction classifications 1 to 5 (fig. 1).
+
+The immunological marker CD4 counts were given in cells per cubic millimeter (Ekpenyong et al. 2021a, 8). The viral RNA loads were expressed in times 10^2^ copies (Ekpenyong, Etebong, and Jackson 2019, 10). The weights ranged from 4.7 to 125 kg on account of the presence of pediatric patients (Ekpenyong, Etebong, and Jackson 2019, 2). The three-drug combinations of antiretroviral therapy were a complementary mix of nucleoside reverse transcriptase inhibitors tenofovir (TDF), lamivudine (3TC) and zidovudine (AZT), and non-nucleoside reverse transcriptase inhibitors efavirenz (EFV) and nivarapine (NVP) given in the first 6 months of treatment (Ekpenyong et al. 2021a, 8).
+
+Patient response and drug reaction were quantified and classified in the 2019 study using the advanced method of interval type-2 fuzzy logic system (Ekpenyong, Etebong, and Jackson 2019, 4). The drug reaction classification used a binary system to indicate very high interaction (C1), high interaction (C2), low interaction (C3), very low interaction (C4), and no interaction (C5; Ekpenyong, Etebong, and Jackson 2019, 11). A low response rate signified high to very high drug interactions and treatment failure, whereas a high response rate denoted low to no drug interactions (Ekpenyong, Etebong, and Jackson 2019, 10, 13).
 
 ```{r}
 options(timeout = 120) # timeout in seconds for some Internet operations
@@ -87,7 +91,7 @@ The sex, therapy, and dreaction variables of the dataset were changed from chara
 
 ??? DISTRIBUTION
 
-The correlation coefficients between variables were visualized using the corrplot function (fig. 2; Wei and Simko 2021). Patient response and drug reaction highly correlated with each other as expected as they refer to similar information. Hence, only drug reaction was retained as an outcome for the purpose of this project. On the other hand, CD4 count was negatively correlated with drug reaction whereas RNA load was positively correlated with it. This means that the bcd4, fcd4, brna and frna variables contained information relevant to drug reaction and were kept as predictors.
+The correlation coefficients across variables were calculated and visualized using the cor and corrplot functions (fig. 2; Wei and Simko 2021).
 
 ```{r}
 options(digits = 3)
@@ -103,7 +107,11 @@ library(corrplot)
 corrplot(cor(dataset1a), method = "square", diag = FALSE, addCoef.col = "gray", tl.col = "black", number.cex = 0.5, number.digits = 2) # shows the correlation coefficients with 2 decimal digits across all variables
 ```
 
-The final dataset was streamlined to contain only these four predictors and one outcome for faster classification modeling.
+Patient response and drug reaction highly correlated with each other, having an absolute coefficient of 74%. This is expected as they refer to similar information. Hence, only drug reaction was retained as an outcome for the purpose of this project.
+
+On the other hand, CD4 count was negatively correlated with drug reaction (at (-48% and -54%) whereas RNA load was positively correlated with it (41% and 55%), while having minimal correlation with each other. This means that the bcd4, fcd4, brna and frna variables contained distinct information relevant to drug reaction and were kept as predictors.
+
+The final dataset was streamlined to contain only these pertinent predictors and outcome for faster classification modeling. Drug reaction was changed from character to factor class as required for outcomes in classification models.
 
 ```{r, echo = TRUE}
 dataset2 <- dataset1 |>
