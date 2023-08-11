@@ -1,7 +1,7 @@
 ---
 title: "Classification Model on Antiretroviral Therapy Reaction and Failure Developed on the Unique Records of the Akwa Ibom HIV Database"
 author: "Nicelle Sernadilla Macaspac"
-date: "July 2023"
+date: "August 2023"
 output: pdf_document
 ---
 
@@ -14,7 +14,7 @@ opts_chunk$set(
 	collapse = TRUE,
 	warning = FALSE,
 	message = FALSE,
-	out.width = "70%",
+	out.width = "80%",
 	fig.align = "center"
 )
 ```
@@ -23,19 +23,17 @@ opts_chunk$set(
 ## Introduction
 
 
+??? INTRODUCTION
+
 This undertaking is part of the capstone in the [Professional Certificate Program in Data Science of Harvard Online](https://www.harvardonline.harvard.edu/course/data-science-professional-certificate). The corresponding R Markdown and R files are in the [GitHub of nsmacaspac](https://github.com/nsmacaspac/92capstone-project-idv-learners).
 
 
 ## Unique Records of the Akwa Ibom HIV Database
 
 
-In a previous study on patient response to antiretroviral therapy, Ekpenyong, Etebong, and Jackson (2019, 3) used a database of patients who received treatment for HIV from thirteen health centers in Akwa Ibom, Nigeria, between 2015 and 2018. Two years later, they published the processed dataset (Ekpenyong et al. 2021b, Appendix) with minor oversight in the accompanying article, which were easily reconciled through the 2019 study and were appropriately referenced throughout this project. The processed dataset was composed of an Individual Treatment Change Episodes table with a column for each antiretroviral drug administered and a concatenated Unique Records table with the drugs combined into a column for each antiretroviral therapy of three drugs administered. For the purpose of this project, we utilize only the Unique Records table.
+In a previous study on patient response to antiretroviral therapy, Ekpenyong, Etebong, and Jackson (2019, 3) used a database of patients who received treatment for HIV from thirteen health centers in Akwa Ibom, Nigeria, between 2015 and 2018. Two years later, they published the processed dataset (Ekpenyong et al. 2021b, Appendix) with minor oversight in the accompanying article, which were easily reconciled through the 2019 study and were appropriately referenced throughout this project. The processed dataset is composed of an Individual Treatment Change Episodes table with a column for each antiretroviral drug administered and a concatenated Unique Records table with the drugs combined into a column for each antiretroviral therapy of three drugs administered. For the purpose of this project, we utilize only the Unique Records table.
 
-The Unique Records table was imported with the corresponding read_xlsx function in the language R. The dataset was composed of 1,056 patient records, each with 15 columns: patient identification, sex, baseline CD4 count, follow-up CD4 count, baseline RNA load, follow-up RNA load, baseline weight, follow-up weight, drug combination, and patient response and drug reaction classifications 1 to 5 (fig. 1).
-
-The immunological marker CD4 counts were given in cells per cubic millimeter (Ekpenyong et al. 2021a, 8). The viral RNA loads were expressed in times 10^2^ copies (Ekpenyong, Etebong, and Jackson 2019, 10). The weights ranged from 4.7 to 125 kg on account of the presence of pediatric patients (Ekpenyong, Etebong, and Jackson 2019, 2). The three-drug combinations of antiretroviral therapy were a complementary mix of nucleoside reverse transcriptase inhibitors tenofovir (TDF), lamivudine (3TC) and zidovudine (AZT), and non-nucleoside reverse transcriptase inhibitors efavirenz (EFV) and nivarapine (NVP) given in the first 6 months of treatment (Ekpenyong et al. 2021a, 8).
-
-Patient response and drug reaction were quantified and classified in the 2019 study using the advanced method of interval type-2 fuzzy logic system (Ekpenyong, Etebong, and Jackson 2019, 4). The drug reaction classification used a binary system to indicate very high interaction (C1), high interaction (C2), low interaction (C3), very low interaction (C4), and no interaction (C5; Ekpenyong, Etebong, and Jackson 2019, 11). A low response rate signified high to very high drug interactions and treatment failure, whereas a high response rate denoted low to no drug interactions (Ekpenyong, Etebong, and Jackson 2019, 10, 13).
+The Unique Records table was imported with the corresponding read_xlsx function in the language R. The dataset is composed of 1,056 patient records, each with 15 columns: patient identification, sex, baseline CD4 count, follow-up CD4 count, baseline RNA load, follow-up RNA load, baseline weight, follow-up weight, drug combination, and patient response and drug reaction classifications 1 to 5 (fig. 1).
 
 ```{r}
 options(timeout = 120) # timeout in seconds for some Internet operations
@@ -46,9 +44,13 @@ library(readxl)
 dataset <- as.data.frame(read_xlsx("mmc1.xlsx", range = "N27:AB1083")) # range reads the Unique Records table, which is the combined version of the Individual Treatment Change Episodes table
 ```
 
-```{r fig1, fig.cap = "First rows of the Unique Records table."}
+```{r fig1, fig.cap = "First rows of the Unique Records table of the Akwa Ibom HIV Database."}
 include_graphics("fig1.png")
 ```
+
+The immunological marker CD4 count is given in cells per cubic millimeter (Ekpenyong et al. 2021a, 8). The viral RNA load is expressed in times 10^2^ copies (Ekpenyong, Etebong, and Jackson 2019, 10). The weight ranges from 4.7 to 125 kg on account of the presence of pediatric patients (Ekpenyong, Etebong, and Jackson 2019, 2). The three-drug combinations of antiretroviral therapy are a complementary mix of nucleoside reverse transcriptase inhibitors tenofovir (TDF), lamivudine (3TC) and zidovudine (AZT), and non-nucleoside reverse transcriptase inhibitors efavirenz (EFV) and nivarapine (NVP) given in the first 6 months of treatment (Ekpenyong et al. 2021a, 8).
+
+Patient response and drug reaction were quantified and classified in the 2019 study using the advanced method of interval type-2 fuzzy logic system (Ekpenyong, Etebong, and Jackson 2019, 4). The drug reaction classification uses a binary system to indicate very high interaction (C1), high interaction (C2), low interaction (C3), very low interaction (C4), and no interaction (C5; Ekpenyong, Etebong, and Jackson 2019, 11). A low response rate signifies high to very high drug interactions and treatment failure, whereas a high response rate denotes low to no drug interactions (Ekpenyong, Etebong, and Jackson 2019, 10, 13).
 
 
 ### _Tidy Dataset_
@@ -107,11 +109,11 @@ library(corrplot)
 corrplot(cor(dataset1a), method = "square", diag = FALSE, addCoef.col = "gray", tl.col = "black", number.cex = 0.5, number.digits = 2) # shows the correlation coefficients with 2 decimal digits across all variables
 ```
 
-Patient response and drug reaction highly correlated with each other, having an absolute coefficient of 74%. This is expected as they refer to similar information. Hence, only drug reaction was retained as an outcome for the purpose of this project.
+Patient response and drug reaction highly correlated with each other, having an absolute coefficient of 74% (fig. 2). This was expected as they refer to similar information. Hence, only drug reaction was retained as an outcome for the purpose of this project.
 
-On the other hand, CD4 count was negatively correlated with drug reaction (at (-48% and -54%) whereas RNA load was positively correlated with it (41% and 55%), while having minimal correlation with each other. This means that the bcd4, fcd4, brna and frna variables contained distinct information relevant to drug reaction and were kept as predictors.
+On the other hand, CD4 count was negatively correlated with drug reaction (-48% and -54%) whereas RNA load was positively correlated with it (41% and 55%), while having minimal correlation with each other (fig. 2). This meant that the bcd4, fcd4, brna and frna variables contained distinct information relevant to drug reaction and were kept as predictors.
 
-The final dataset was streamlined to contain only these pertinent predictors and outcome for faster classification modeling. Drug reaction was changed from character to factor class as required for outcomes in classification models.
+The final dataset was streamlined to contain only these pertinent predictors and outcome for faster classification modeling. The dreaction variable was changed from character to factor class as required for outcomes in classification models.
 
 ```{r, echo = TRUE}
 dataset2 <- dataset1 |>
@@ -121,27 +123,37 @@ head(dataset2, n = 5)
 ```
 
 
+## CD4 Count and RNA Load
 
 
+The predictors CD4 count and RNA load are measures of immune system health and HIV status, respectively (Ekpenyong, Etebong, and Jackson 2019, 10). They are crucial markers of drug reaction and treatment failure in settings with limited resources for the costly genotypic profiling of drug resistance (Isaakidis et al. 2010, 7; Revell et al. 2010, 605).
+
+The interactions of these predictors with drug reaction were further visualized using ggplot2 functions (fig. 3). The plots showed a general increase in CD4 count and decrease in RNA load at follow-up. This indicated the robustness of the immune system of most patients in suppressing the HIV and positive patient response to the treatment (Ekpenyong, Etebong, and Jackson 2019, 10).
+
+```{r, out.width = "45%", fig.cap = "Scatterplots of CD4 count, RNA load, and the corresponding drug reaction at baseline and follow-up.", fig.show = "hold"}
+dataset2 |>
+  ggplot(aes(brna, bcd4, color = dreaction)) +
+  geom_point() +
+  geom_smooth(color = "black", size = 0.5, method = "lm", se = FALSE) + # adds a trend line
+  scale_x_continuous("Baseline RNA Load", limits = c(100, 700)) +
+  scale_y_continuous("Baseline CD4 Count", limits = c(0, 2000)) + # encompasses the full range of the axes of baseline and follow-up data for ease of comparison
+  scale_color_discrete(name = "Drug Reaction")
+dataset2 |>
+  ggplot(aes(frna, fcd4, color = dreaction)) +
+  geom_point() +
+  geom_smooth(color = "black", size = 0.5, method = "lm", se = FALSE) +
+  scale_x_continuous("Follow-up RNA Load", limits = c(100, 700)) +
+  scale_y_continuous("Follow-up CD4 Count", limits = c(0, 2000)) +
+  scale_color_discrete(name = "Drug Reaction")
+```
+
+However, the plots also exhibited patients who retained a low CD4 count and high RNA load at follow-up (fig. 3). They were the same cases classified as with high to very high drug interaction and treatment failure.
 
 
+## Classification Modeling
 
 
-
-
-## Predictors
-
-
-### _CD4 Count_
-
-
-### _RNA Load_
-
-
-## Classification Models
-
-
-- why this partition
+- why this partition 80% for training and 20% for testing. No allotment for validation as we are using the caret functions and its default sampling method of bootstrapping.
 
 
 ### _k-Nearest Neighbor Model_
@@ -165,7 +177,30 @@ head(dataset2, n = 5)
 ## Conclusion
 
 
--meaningful decisions on antiretroviral therapy administration
+- therapy is not a predictor.
+
+-it must be noted that, due to the limited resources in the Nigerian environment, only 5 drugs combined into 3 therapies were possible (Ekpenyong, Etebong, and Jackson 2019, 3)
+
+- Two
+RF models were trained using .8000 TCEs without the use of
+genotypes, one with comprehensive and one with simplified
+treatment history information. Both models predicted virological
+response for 400 independent test cases with an accuracy of
+82%. The models were able to identify alternative regimens
+(involving the same restricted range of drugs) that they predicted
+would have reduced viral load to below 50 copies/mL in almost
+half of the cases of actual treatment failure.11 They identified regimens that were predicted to be more effective than those that
+failed in almost all cases. A secondary analysis of the input variables used for these models revealed that the baseline viral load
+was by far the most important variable (considerably more so
+than CD4 counts, for example) for the models in making these
+predictions. These studies suggest that with viral load monitoring in place,
+computational models could play an important future role in
+optimizing antiretroviral therapy in resource-limited settings. (Revell et al. 2010, 606)
+
+
+- meaningful decisions on antiretroviral therapy administration
+
+- it shall aid physicians on more proactive detection of acute interaction as well as early referrals of patients with failed treatments, for immediate change in treatment episode (Ekpenyong, Etebong, and Jackson 2019, 2)
 
 
 ## References
@@ -179,6 +214,13 @@ Ekpenyong, Moses E., Philip I. Etebong, and Tenderwealth C. Jackson. 2019."Fuzzy
 Ekpenyong, Moses E., Philip I. Etebong, Tenderwealth C. Jackson, and Edidiong J. Udofa. 2021b."Processed HIV Prognostic Dataset for Control Experiments." _Data in Brief_ 36: 107147. [https://doi.org/10.1016/j.dib.2021.107147](https://doi.org/10.1016/j.dib.2021.107147).
 
 Irizarry, Rafael A. 2002. _Introduction to Data Science: Data Analysis and Prediction Algorithms with R_. [http://rafalab.dfci.harvard.edu/dsbook/](http://rafalab.dfci.harvard.edu/dsbook/).
+
+Isaakidis, Petros, Marie-Eve Raguenaud, Vantha Te, Chhraing S. Tray, Kazumi Akao, Varun Kumar, Sopheak Ngin, Eric Nerrienet, and Rony Zachariah. 2010. "High Survival and Treatment Success Sustained
+After Two and Three Years of First-line ART for
+Children in Cambodia." _Journal of the International AIDS Society_ 13: 11. [https://doi.org/10.1186/1758-2652-13-11](https://doi.org/10.1186/1758-2652-13-11).
+
+Revell, A. D., D. Wang, R. Harrigan, R. L. Hamers, A. M. J. Wensing, F. DeWolf, M. Nelson, A.-M. Geretti, and B. A. Larder. 2010. "Modelling Response to HIV Therapy Without a Genotype: An Argument
+for Viral Load Monitoring in Resource-Limited Settings." _Journal of Antimicrobial Chemotherapy_ 65: 605-607. [https://doi.org/10.1093/jac/dkq032](https://doi.org/10.1093/jac/dkq032).
 
 Wei, Taiyun, and Viliam Simko. 2021. "An Introduction to corrplot Package." Last modified November 18, 2021. [https://cran.r-project.org/web/packages/corrplot/vignettes/corrplot-intro.html](https://cran.r-project.org/web/packages/corrplot/vignettes/corrplot-intro.html).
 

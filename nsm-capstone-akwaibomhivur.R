@@ -1,6 +1,6 @@
 # CLASSIFICATION MODEL ON ANTIRETROVIRAL THERAPY REACTION AND FAILURE DEVELOPED ON THE UNIQUE RECORDS OF THE AKWA IBOM HIV DATABASE
 # NICELLE SERNADILLA MACASPAC
-# JULY 2023
+# AUGUST 2023
 # R VERSION: 4.3
 # RUNNING TIME: 4 minutes
 
@@ -55,7 +55,7 @@ head(dataset, n = 5)
 # 3  3   M   78  131  4.1  1.7      70      75 AZT+3TC+NVP 50.00000      0     1  0
 # 4  4   M  295  574  4.4  1.9      64      66 AZT+3TC+NVP 50.00000      0     0  1
 # 5  5   F  397  792  1.9  1.3      52      55 AZT+3TC+NVP 76.00000      0     0  0
-# vli ni
+#   vli ni
 # 1   0  0
 # 2   1  0
 # 3   0  0
@@ -172,17 +172,16 @@ str(dataset2)
 
 
 
+
+
+
+
+
+
+
 ###############
 ###   WIP   ###
 ###############
-
-
-
-
-
-
-
-
 
 
 dataset2 |>
@@ -192,6 +191,7 @@ dataset2 |>
   scale_x_continuous("Baseline RNA Load", limits = c(100, 700)) +
   scale_y_continuous("Baseline CD4 Count", limits = c(0, 2000)) + # encompasses the full range of the axes of baseline and follow-up data for ease of comparison
   scale_color_discrete(name = "Drug Reaction")
+# there is a general increase in CD4 count at follow-up
 
 dataset2 |>
   ggplot(aes(frna, fcd4, color = dreaction)) +
