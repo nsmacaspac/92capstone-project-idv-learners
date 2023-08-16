@@ -1,5 +1,5 @@
 ---
-title: "Classification Model on Antiretroviral Therapy Reaction and Failure Developed on the Unique Records of the Akwa Ibom HIV Database"
+title: "Multi-class Discriminative Classification Model on Antiretroviral Therapy Reaction and Failure Developed on the Unique Records of the Akwa Ibom HIV Database"
 author: "Nicelle Sernadilla Macaspac"
 date: "August 2023"
 output: pdf_document
@@ -23,7 +23,11 @@ opts_chunk$set(
 ## Introduction
 
 
-??? INTRODUCTION
+- HIV has no known cure, but the infected patient is treated with highly active antiretroviral therapy (HAART) [3], mainly for the purpose of suppressing the viral load (the amount of HIV in the blood stream) and prolonging the life expectancy of the patient (Ekpenyong, Etebong, and Jackson 2019, 1).
+
+-Current antiretroviral therapy does not cure HIV infection but allows a person's immune system to get stronger. This helps them to fight other infections (World Health Organization, n.d.)
+
+- machine learning
 
 This undertaking is part of the capstone in the [Professional Certificate Program in Data Science of Harvard Online](https://www.harvardonline.harvard.edu/course/data-science-professional-certificate). The corresponding R Markdown and R files are in the [GitHub of nsmacaspac](https://github.com/nsmacaspac/92capstone-project-idv-learners).
 
@@ -50,7 +54,7 @@ include_graphics("fig1.png")
 
 The immunological marker CD4 count is given in cells per cubic millimeter (Ekpenyong et al. 2021a, 8). The viral RNA load is expressed in times 10^2^ copies (Ekpenyong, Etebong, and Jackson 2019, 10). The weight ranges from 4.7 to 125 kg on account of the presence of pediatric patients (Ekpenyong, Etebong, and Jackson 2019, 2). The three-drug combinations of antiretroviral therapy are a complementary mix of nucleoside reverse transcriptase inhibitors tenofovir (TDF), lamivudine (3TC) and zidovudine (AZT), and non-nucleoside reverse transcriptase inhibitors efavirenz (EFV) and nivarapine (NVP) given in the first 6 months of treatment (Ekpenyong et al. 2021a, 8).
 
-Patient response and drug reaction were quantified and classified in the 2019 study using the advanced method of interval type-2 fuzzy logic system (Ekpenyong, Etebong, and Jackson 2019, 4). The drug reaction classification uses a binary system to indicate very high interaction (C1), high interaction (C2), low interaction (C3), very low interaction (C4), and no interaction (C5; Ekpenyong, Etebong, and Jackson 2019, 11). A low response rate signifies high to very high drug interactions and treatment failure, whereas a high response rate denotes low to no drug interactions (Ekpenyong, Etebong, and Jackson 2019, 10, 13).
+Patient response and drug reaction were quantified and classified in the 2019 study using expaert domain knowledge and the advanced method of interval type-2 fuzzy logic system (Ekpenyong, Etebong, and Jackson 2019, 4, 7). The drug reaction classification uses a binary system to indicate very high interaction (C1), high interaction (C2), low interaction (C3), very low interaction (C4), and no interaction (C5; Ekpenyong, Etebong, and Jackson 2019, 11). A low response rate signifies high to very high drug interactions and treatment failure, whereas a high response rate denotes low to no drug interactions (Ekpenyong, Etebong, and Jackson 2019, 10, 13).
 
 
 ### _Tidy Dataset_
@@ -109,11 +113,11 @@ library(corrplot)
 corrplot(cor(dataset1a), method = "square", diag = FALSE, addCoef.col = "gray", tl.col = "black", number.cex = 0.5, number.digits = 2) # shows the correlation coefficients with 2 decimal digits across all variables
 ```
 
-Patient response and drug reaction highly correlated with each other, having an absolute coefficient of 74% (fig. 2). This was expected as they refer to similar information. Hence, only drug reaction was retained as an outcome for the purpose of this project.
+Patient response and drug reaction highly correlated with each other, having an absolute coefficient of 74% (fig. 2). This was expected as they refer to similar information. Hence, only the dreaction variable was retained as an outcome for the purpose of this project.
 
 On the other hand, CD4 count was negatively correlated with drug reaction (-48% and -54%) whereas RNA load was positively correlated with it (41% and 55%), while having minimal correlation with each other (fig. 2). This meant that the bcd4, fcd4, brna and frna variables contained distinct information relevant to drug reaction and were kept as predictors.
 
-The final dataset was streamlined to contain only these pertinent predictors and outcome for faster classification modeling. The dreaction variable was changed from character to factor class as required for outcomes in classification models.
+The preprocessed dataset was streamlined to contain only these pertinent predictors and outcome for faster classification modeling. The dreaction variable was changed from character to factor class as required for outcomes in classification models.
 
 ```{r, echo = TRUE}
 dataset2 <- dataset1 |>
@@ -123,14 +127,16 @@ head(dataset2, n = 5)
 ```
 
 
-## CD4 Count and RNA Load
+## Predictors
 
 
-The predictors CD4 count and RNA load are measures of immune system health and HIV status, respectively (Ekpenyong, Etebong, and Jackson 2019, 10). They are crucial markers of drug reaction and treatment failure in settings with limited resources for the costly genotypic profiling of drug resistance (Isaakidis et al. 2010, 7; Revell et al. 2010, 605).
+The predictors CD4 count and RNA load are measures of immune system health and HIV status, respectively (Ekpenyong, Etebong, and Jackson 2019, 10; World Health Organization, n.d.). They are crucial markers of drug reaction and treatment failure that can be obtained from simple laboratory tests in settings with limited resources for the costly HIV genotyping to determine drug resistance (Isaakidis et al. 2010, 7; Revell et al. 2010, 605).
 
 The interactions of these predictors with drug reaction were further visualized using ggplot2 functions (fig. 3). The plots showed a general increase in CD4 count and decrease in RNA load at follow-up. This indicated the robustness of the immune system of most patients in suppressing the HIV and positive patient response to the treatment (Ekpenyong, Etebong, and Jackson 2019, 10).
 
-```{r, out.width = "45%", fig.cap = "Scatterplots of CD4 count, RNA load, and the corresponding drug reaction at baseline and follow-up.", fig.show = "hold"}
+However, the plots also exhibited patients who retained a low CD4 count and high RNA load at follow-up (fig. 3). They were the same cases classified as with high drug interaction and treatment failure.
+
+```{r fig3, out.width = "45%", fig.cap = "Scatterplots of CD4 count, RNA load, and the corresponding drug reaction at baseline and follow-up.", fig.show = "hold"}
 dataset2 |>
   ggplot(aes(brna, bcd4, color = dreaction)) +
   geom_point() +
@@ -147,42 +153,80 @@ dataset2 |>
   scale_color_discrete(name = "Drug Reaction")
 ```
 
-However, the plots also exhibited patients who retained a low CD4 count and high RNA load at follow-up (fig. 3). They were the same cases classified as with high to very high drug interaction and treatment failure.
+
+## Classification Algorithms
 
 
-## Classification Modeling
+In the preprocessed dataset with the bcd4, fcd4, brna, and frna variables as predictors and the dreaction variable as outcome, there were only 1,056 observations. The dataset was split into 80% train set and 20% test set using the createDataPartition function to maximize the data available for both training and testing. The function additionally preserved the distribution of the five outcome classes of the dreaction variable: ni, vli, li, hi_tf, and vhi_tf (Kuhn 2019).
 
+```{r}
+set.seed(20, sample.kind = "Rounding") # if using R 3.6 or later
+# set.seed(20) # if using R 3.5 or earlier
+# for reproducibility during assessment
+train_index <- createDataPartition(dataset2$dreaction, p = 0.8, list = FALSE)
+train_set <- dataset2[train_index,]
+test_set <- dataset2[-train_index,]
+```
 
-- why this partition 80% for training and 20% for testing. No allotment for validation as we are using the caret functions and its default sampling method of bootstrapping.
+Classification algorithms introduced in the program that can possibly accommodate the nonlinear nature of the decision boundaries of the outcome classes (similar to what was observed in fig. 3) were successively trained on the train set with the train function. We discuss them in the following subsections. The streamlined dataset allowed for the use of the default resampling method of the function that is bootstrapping for twenty-five times, which would have been time-consuming otherwise. Thereafter, the algorithms were then evaluated for the accuracy of their outcome prediction in the test set.
 
 
 ### _k-Nearest Neighbor Model_
 
 
-- why this model
+-discriminative classification algorithm(Haugh 2017)
+
+- we find the k nearest
+neighbors of x and use majority voting of these neighbors to classify x
+... and that maximizes the accuracy (Irizarry 2002)
+
+- kNN is easier to adapt to non-linear dimensions (Irizarry 2002)
+
+- accuracy, proportion of predicted correctly (Irizarry 2002)
+
+- check sensitivity and specificity to remove the clouding by the prevalence of our assessment (Irizarry 2002)
+
+- ask if the prevalence of the outcome is expected to be the same in future data; is the sample biased? (Irizarry 2002)
 
 
 ### _Recursive Partitioning and Regression Trees Model_
 
 
+-discriminative classification algorithm (Haugh 2017)
+
+- complexity paarmeter (Irizarry 2002)
+
+-highly interpretable; easy to visualize (Irizarry 2002)
+
+
 ### _Rborist Model_
+
+
+-discriminative classification algorithm (Haugh 2017)
+
+- The goal is to improve prediction performance and reduce instability by averaging multiple decision trees (Irizarry 2002)
+
+- A disadvantage of random forests is that we lose interpretability.
+An approach that helps with interpretability is to examine variable importance. varImp function to know which  predictors are used the most (Irizarry 2002)
 
 
 ### _Quadratic Discriminant Analysis Model_
 
 
+-generative classification algorithm (Haugh 2017)
+
+-The quadratic discriminant analysis is generally preferred due to greater flexibility of the decision boundaries (Haugh 2017)
+
+
 ## Classification Model
 
+- discriminatuve classification algorithm  (Haugh 2017)
 
-## Conclusion
+- results of model performances
 
+-  the model with the best predictions on new data
 
-- therapy is not a predictor.
-
--it must be noted that, due to the limited resources in the Nigerian environment, only 5 drugs combined into 3 therapies were possible (Ekpenyong, Etebong, and Jackson 2019, 3)
-
-- Two
-RF models were trained using .8000 TCEs without the use of
+- Two RF models were trained using .8000 TCEs without the use of
 genotypes, one with comprehensive and one with simplified
 treatment history information. Both models predicted virological
 response for 400 independent test cases with an accuracy of
@@ -196,6 +240,14 @@ than CD4 counts, for example) for the models in making these
 predictions. These studies suggest that with viral load monitoring in place,
 computational models could play an important future role in
 optimizing antiretroviral therapy in resource-limited settings. (Revell et al. 2010, 606)
+
+
+## Conclusion
+
+
+- therapy is not a predictor.
+
+-it must be noted that, due to the limited resources in the Nigerian environment, only 5 drugs combined into 3 therapies were possible (Ekpenyong, Etebong, and Jackson 2019, 3)
 
 
 - meaningful decisions on antiretroviral therapy administration
@@ -213,11 +265,15 @@ Ekpenyong, Moses E., Philip I. Etebong, and Tenderwealth C. Jackson. 2019."Fuzzy
 
 Ekpenyong, Moses E., Philip I. Etebong, Tenderwealth C. Jackson, and Edidiong J. Udofa. 2021b."Processed HIV Prognostic Dataset for Control Experiments." _Data in Brief_ 36: 107147. [https://doi.org/10.1016/j.dib.2021.107147](https://doi.org/10.1016/j.dib.2021.107147).
 
+Haugh, Martin. 2017. "IEOR E4525: Machine Learning for OR & FE (Columbia University)." Accessed August 15, 2023. [http://www.columbia.edu/~mh2078/ML_ORFE.html](http://www.columbia.edu/~mh2078/ML_ORFE.html).
+
 Irizarry, Rafael A. 2002. _Introduction to Data Science: Data Analysis and Prediction Algorithms with R_. [http://rafalab.dfci.harvard.edu/dsbook/](http://rafalab.dfci.harvard.edu/dsbook/).
 
 Isaakidis, Petros, Marie-Eve Raguenaud, Vantha Te, Chhraing S. Tray, Kazumi Akao, Varun Kumar, Sopheak Ngin, Eric Nerrienet, and Rony Zachariah. 2010. "High Survival and Treatment Success Sustained
 After Two and Three Years of First-line ART for
 Children in Cambodia." _Journal of the International AIDS Society_ 13: 11. [https://doi.org/10.1186/1758-2652-13-11](https://doi.org/10.1186/1758-2652-13-11).
+
+Kuhn, Max. 2019. "The caret Package." Last modified March 27, 2019. [https://topepo.github.io/caret/](https://topepo.github.io/caret/).
 
 Revell, A. D., D. Wang, R. Harrigan, R. L. Hamers, A. M. J. Wensing, F. DeWolf, M. Nelson, A.-M. Geretti, and B. A. Larder. 2010. "Modelling Response to HIV Therapy Without a Genotype: An Argument
 for Viral Load Monitoring in Resource-Limited Settings." _Journal of Antimicrobial Chemotherapy_ 65: 605-607. [https://doi.org/10.1093/jac/dkq032](https://doi.org/10.1093/jac/dkq032).

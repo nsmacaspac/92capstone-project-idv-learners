@@ -1,4 +1,4 @@
-# CLASSIFICATION MODEL ON ANTIRETROVIRAL THERAPY REACTION AND FAILURE DEVELOPED ON THE UNIQUE RECORDS OF THE AKWA IBOM HIV DATABASE
+# MULTI-CLASS DISCRIMINATIVE CLASSIFICATION MODEL ON ANTIRETROVIRAL THERAPY REACTION AND FAILURE DEVELOPED ON THE UNIQUE RECORDS OF THE AKWA IBOM HIV DATABASE
 # NICELLE SERNADILLA MACASPAC
 # AUGUST 2023
 # R VERSION: 4.3
@@ -109,7 +109,7 @@ str(dataset1)
 
 
 
-# we preprocess dataset1
+# we preprocess the tidy dataset
 
 options(digits = 3)
 dataset1a <- dataset1 |>
@@ -148,6 +148,7 @@ nearZeroVar(dataset1a)
 if(!require(corrplot)) install.packages("corrplot", repos = "http://cran.us.r-project.org")
 library(corrplot)
 corrplot(cor(dataset1a), method = "square", diag = FALSE, addCoef.col = "gray", tl.col = "black", number.cex = 0.5, number.digits = 2) # shows the correlation coefficients with 2 decimal digits across all variables
+# fig2 in the Rmd file
 # CD4 count is negatively correlated with drug reaction
 # RNA load is positively correlated with drug reaction
 # response is highly correlated with drug reaction as expected
@@ -172,6 +173,45 @@ str(dataset2)
 
 
 
+# CD4 COUNT AND RNA LOAD
+
+
+
+# we visualize the predictors and outcome of the preprocessed dataset
+
+dataset2 |>
+  ggplot(aes(brna, bcd4, color = dreaction)) +
+  geom_point() +
+  geom_smooth(color = "black", size = 0.5, method = "lm", se = FALSE) + # adds a trend line
+  scale_x_continuous("Baseline RNA Load", limits = c(100, 700)) +
+  scale_y_continuous("Baseline CD4 Count", limits = c(0, 2000)) + # encompasses the full range of the axes of baseline and follow-up data for ease of comparison
+  scale_color_discrete(name = "Drug Reaction") # fig3 in the Rmd file
+# there is a general increase in CD4 count at follow-up
+
+dataset2 |>
+  ggplot(aes(frna, fcd4, color = dreaction)) +
+  geom_point() +
+  geom_smooth(color = "black", size = 0.5, method = "lm", se = FALSE) +
+  scale_x_continuous("Follow-up RNA Load", limits = c(100, 700)) +
+  scale_y_continuous("Follow-up CD4 Count", limits = c(0, 2000)) +
+  scale_color_discrete(name = "Drug Reaction")
+# there is a general decrease in RNA load at follow-up
+
+# there are patients who retained a low CD4 count and high RNA load at follow-up
+
+
+
+# we partition the preprocessed dataset
+
+set.seed(20, sample.kind = "Rounding") # if using R 3.6 or later
+# set.seed(20) # if using R 3.5 or earlier
+# for reproducibility during assessment
+train_index <- createDataPartition(dataset2$dreaction, p = 0.8, list = FALSE)
+train_set <- dataset2[train_index,]
+test_set <- dataset2[-train_index,]
+
+
+
 
 
 
@@ -184,122 +224,71 @@ str(dataset2)
 ###############
 
 
-dataset2 |>
-  ggplot(aes(brna, bcd4, color = dreaction)) +
-  geom_point() +
-  geom_smooth(color = "black", size = 0.5, method = "lm", se = FALSE) + # adds a trend line
-  scale_x_continuous("Baseline RNA Load", limits = c(100, 700)) +
-  scale_y_continuous("Baseline CD4 Count", limits = c(0, 2000)) + # encompasses the full range of the axes of baseline and follow-up data for ease of comparison
-  scale_color_discrete(name = "Drug Reaction")
-# there is a general increase in CD4 count at follow-up
-
-dataset2 |>
-  ggplot(aes(frna, fcd4, color = dreaction)) +
-  geom_point() +
-  geom_smooth(color = "black", size = 0.5, method = "lm", se = FALSE) +
-  scale_x_continuous("Follow-up RNA Load", limits = c(100, 700)) +
-  scale_y_continuous("Follow-up CD4 Count", limits = c(0, 2000)) +
-  scale_color_discrete(name = "Drug Reaction")
-# there is a general decrease in RNA load at follow-up
-
-
-
-
-
-
-
-
-
-
-# we partition dataset2
-
-set.seed(20, sample.kind = "Rounding") # if using R 3.6 or later
-# set.seed(20) # if using R 3.5 or earlier
-# for reproducibility during assessment
-test_index <- createDataPartition(dataset2$dreaction, p = 0.2, list = FALSE)
-train_set <- dataset2[-test_index,]
-test_set <- dataset2[test_index,]
-
-
 
 # we train and test the k-nearest neighbor model
 
 set.seed(30, sample.kind = "Rounding") # if using R 3.6 or later
 # set.seed(30) # if using R 3.5 or earlier
-knn_model <- train(dreaction ~ ., train_set, method = "knn", tuneGrid = data.frame(k = seq(10, 30, 1))) # tunes neighbor number
+knn_model <- train(dreaction ~ ., train_set, method = "knn", tuneGrid = data.frame(k = seq(3, 9, 1))) # tunes neighbor number
 ggplot(knn_model, highlight = TRUE)
 knn_model
 # k-Nearest Neighbors
 #
-# 844 samples
+# 847 samples
 # 4 predictor
-# 5 classes: '1', '2', '3', '4', '5'
+# 5 classes: 'ni', 'vli', 'li', 'hi_tf', 'vhi_tf'
 #
 # No pre-processing
 # Resampling: Bootstrapped (25 reps)
-# Summary of sample sizes: 844, 844, 844, 844, 844, 844, ...
+# Summary of sample sizes: 847, 847, 847, 847, 847, 847, ...
 # Resampling results across tuning parameters:
 #
-#   k   Accuracy  Kappa
-# 10  0.532     0.323
-# 11  0.534     0.326
-# 12  0.536     0.328
-# 13  0.537     0.329
-# 14  0.540     0.332
-# 15  0.537     0.328
-# 16  0.541     0.333
-# 17  0.540     0.332
-# 18  0.537     0.328
-# 19  0.538     0.330
-# 20  0.542     0.336
-# 21  0.542     0.336
-# 22  0.544     0.339
-# 23  0.545     0.340
-# 24  0.543     0.337
-# 25  0.542     0.336
-# 26  0.543     0.337
-# 27  0.541     0.334
-# 28  0.541     0.333
-# 29  0.539     0.331
-# 30  0.536     0.326
+# k  Accuracy  Kappa
+# 3  0.804     0.719
+# 4  0.797     0.710
+# 5  0.799     0.711
+# 6  0.797     0.709
+# 7  0.796     0.707
+# 8  0.798     0.710
+# 9  0.798     0.710
 #
 # Accuracy was used to select the optimal model using the largest value.
-# The final value used for the model was k = 23.
+# The final value used for the model was k = 3.
 
 knn_dreaction <- predict(knn_model, test_set)
 confusionMatrix(knn_dreaction, test_set$dreaction)
 # Confusion Matrix and Statistics
 #
 #           Reference
-# Prediction  1  2  3  4  5
-#         1  0  0  0  0  0
-#         2  0  1  0  1  0
-#         3  5 10 17  6  1
-#         4  0  2 26 47 13
-#         5  0  0  6 31 46
+# Prediction ni vli li hi_tf vhi_tf
+#     ni     55   4  1     0      0
+#     vli     4  75  5     1      0
+#     li      0   5 41     2      0
+#     hi_tf   0   0  1     8      0
+#     vhi_tf  0   0  0     2      5
 #
 # Overall Statistics
 #
-# Accuracy : 0.524
-# 95% CI : (0.454, 0.592)
-# No Information Rate : 0.401
-# P-Value [Acc > NIR] : 0.000203
+# Accuracy : 0.88
+# 95% CI : (0.829, 0.921)
+# No Information Rate : 0.402
+# P-Value [Acc > NIR] : <2e-16
 #
-# Kappa : 0.299
+# Kappa : 0.829
 #
 # Mcnemar's Test P-Value : NA
 #
 # Statistics by Class:
 #
-#                      Class: 1 Class: 2 Class: 3 Class: 4 Class: 5
-# Sensitivity            0.0000  0.07692   0.3469    0.553    0.767
-# Specificity            1.0000  0.99497   0.8650    0.677    0.757
-# Pos Pred Value            NaN  0.50000   0.4359    0.534    0.554
-# Neg Pred Value         0.9764  0.94286   0.8150    0.694    0.891
-# Prevalence             0.0236  0.06132   0.2311    0.401    0.283
-# Detection Rate         0.0000  0.00472   0.0802    0.222    0.217
-# Detection Prevalence   0.0000  0.00943   0.1840    0.415    0.392
-# Balanced Accuracy      0.5000  0.53595   0.6060    0.615    0.762
+#                      Class: ni Class: vli Class: li Class: hi_tf Class: vhi_tf
+# Sensitivity              0.932      0.893     0.854       0.6154        1.0000
+# Specificity              0.967      0.920     0.957       0.9949        0.9902
+# Pos Pred Value           0.917      0.882     0.854       0.8889        0.7143
+# Neg Pred Value           0.973      0.927     0.957       0.9750        1.0000
+# Prevalence               0.282      0.402     0.230       0.0622        0.0239
+# Detection Rate           0.263      0.359     0.196       0.0383        0.0239
+# Detection Prevalence     0.287      0.407     0.230       0.0431        0.0335
+# Balanced Accuracy        0.949      0.906     0.905       0.8051        0.9951
 
 
 
@@ -312,68 +301,68 @@ ggplot(rpart_model, highlight = TRUE)
 rpart_model
 # CART
 #
-# 844 samples
+# 847 samples
 # 4 predictor
-# 5 classes: '1', '2', '3', '4', '5'
+# 5 classes: 'ni', 'vli', 'li', 'hi_tf', 'vhi_tf'
 #
 # No pre-processing
 # Resampling: Bootstrapped (25 reps)
-# Summary of sample sizes: 844, 844, 844, 844, 844, 844, ...
+# Summary of sample sizes: 847, 847, 847, 847, 847, 847, ...
 # Resampling results across tuning parameters:
 #
-#   cp    Accuracy  Kappa
-# 0.00  0.970     0.958
-# 0.01  0.971     0.958
-# 0.02  0.964     0.949
-# 0.03  0.937     0.910
-# 0.04  0.914     0.877
-# 0.05  0.896     0.850
-# 0.06  0.874     0.817
-# 0.07  0.867     0.806
-# 0.08  0.855     0.788
-# 0.09  0.849     0.778
-# 0.10  0.849     0.778
+# cp    Accuracy  Kappa
+# 0.00  0.961     0.944
+# 0.01  0.959     0.942
+# 0.02  0.950     0.929
+# 0.03  0.923     0.890
+# 0.04  0.907     0.866
+# 0.05  0.898     0.853
+# 0.06  0.888     0.838
+# 0.07  0.875     0.819
+# 0.08  0.866     0.805
+# 0.09  0.856     0.790
+# 0.10  0.839     0.763
 #
 # Accuracy was used to select the optimal model using the largest value.
-# The final value used for the model was cp = 0.01.
+# The final value used for the model was cp = 0.
 
 plot(rpart_model$finalModel, margin = 0.05) # margin adjusts the plot size
-text(rpart_model$finalModel, cex = 1) # cex adjusts the label size
+text(rpart_model$finalModel, cex = 0.8) # cex adjusts the label size
 
 rpart_dreaction <- predict(rpart_model, test_set)
 confusionMatrix(rpart_dreaction, test_set$dreaction)
 # Confusion Matrix and Statistics
 #
 #           Reference
-# Prediction  1  2  3  4  5
-#         1  5  1  0  0  0
-#         2  0 11  0  0  0
-#         3  0  1 47  1  0
-#         4  0  0  2 83  0
-#         5  0  0  0  1 60
+# Prediction ni vli li hi_tf vhi_tf
+#     ni     57   0  0     0      0
+#     vli     2  84  0     0      0
+#     li      0   0 46     1      0
+#     hi_tf   0   0  2    12      0
+#     vhi_tf  0   0  0     0      5
 #
 # Overall Statistics
 #
-# Accuracy : 0.972
-# 95% CI : (0.939, 0.99)
-# No Information Rate : 0.401
+# Accuracy : 0.976
+# 95% CI : (0.945, 0.992)
+# No Information Rate : 0.402
 # P-Value [Acc > NIR] : <2e-16
 #
-# Kappa : 0.96
+# Kappa : 0.966
 #
 # Mcnemar's Test P-Value : NA
 #
 # Statistics by Class:
 #
-#                      Class: 1 Class: 2 Class: 3 Class: 4 Class: 5
-# Sensitivity            1.0000   0.8462    0.959    0.976    1.000
-# Specificity            0.9952   1.0000    0.988    0.984    0.993
-# Pos Pred Value         0.8333   1.0000    0.959    0.976    0.984
-# Neg Pred Value         1.0000   0.9900    0.988    0.984    1.000
-# Prevalence             0.0236   0.0613    0.231    0.401    0.283
-# Detection Rate         0.0236   0.0519    0.222    0.392    0.283
-# Detection Prevalence   0.0283   0.0519    0.231    0.401    0.288
-# Balanced Accuracy      0.9976   0.9231    0.973    0.980    0.997
+#                      Class: ni Class: vli Class: li Class: hi_tf Class: vhi_tf
+# Sensitivity              0.966      1.000     0.958       0.9231        1.0000
+# Specificity              1.000      0.984     0.994       0.9898        1.0000
+# Pos Pred Value           1.000      0.977     0.979       0.8571        1.0000
+# Neg Pred Value           0.987      1.000     0.988       0.9949        1.0000
+# Prevalence               0.282      0.402     0.230       0.0622        0.0239
+# Detection Rate           0.273      0.402     0.220       0.0574        0.0239
+# Detection Prevalence     0.273      0.411     0.225       0.0670        0.0239
+# Balanced Accuracy        0.983      0.992     0.976       0.9564        1.0000
 
 # higher than the accuracy of the k-nearest neighbor model
 
@@ -390,43 +379,43 @@ ggplot(rborist_model, highlight = TRUE)
 rborist_model
 # Random Forest
 #
-# 844 samples
+# 847 samples
 # 4 predictor
-# 5 classes: '1', '2', '3', '4', '5'
+# 5 classes: 'ni', 'vli', 'li', 'hi_tf', 'vhi_tf'
 #
 # No pre-processing
 # Resampling: Bootstrapped (25 reps)
-# Summary of sample sizes: 844, 844, 844, 844, 844, 844, ...
+# Summary of sample sizes: 847, 847, 847, 847, 847, 847, ...
 # Resampling results across tuning parameters:
 #
-#   predFixed  minNode  Accuracy  Kappa
-# 1          1        0.970     0.958
-# 1          2        0.970     0.958
-# 1          3        0.971     0.959
-# 1          4        0.971     0.958
-# 2          1        0.980     0.971
-# 2          2        0.981     0.973
-# 2          3        0.980     0.972
-# 2          4        0.981     0.973
-# 3          1        0.980     0.972
-# 3          2        0.981     0.973
-# 3          3        0.980     0.972
-# 3          4        0.980     0.972
-# 4          1        0.981     0.973
-# 4          2        0.980     0.972
-# 4          3        0.980     0.972
-# 4          4        0.981     0.972
+# predFixed  minNode  Accuracy  Kappa
+# 1          1        0.964     0.949
+# 1          2        0.965     0.950
+# 1          3        0.964     0.948
+# 1          4        0.963     0.947
+# 2          1        0.975     0.964
+# 2          2        0.975     0.964
+# 2          3        0.975     0.964
+# 2          4        0.975     0.964
+# 3          1        0.977     0.967
+# 3          2        0.977     0.967
+# 3          3        0.977     0.967
+# 3          4        0.977     0.966
+# 4          1        0.977     0.968
+# 4          2        0.977     0.968
+# 4          3        0.977     0.967
+# 4          4        0.977     0.967
 #
 # Accuracy was used to select the optimal model using the largest value.
-# The final values used for the model were predFixed = 3 and minNode = 2.
+# The final values used for the model were predFixed = 4 and minNode = 1.
 
 varImp(rborist_model)
 # Rborist variable importance
 #
-#     Overall
+#       Overall
 # brna   100.0
-# fcd4    51.1
-# bcd4    45.3
+# fcd4    44.9
+# bcd4     7.5
 # frna     0.0
 
 # baseline RNA load is the most important predictor
@@ -436,35 +425,35 @@ confusionMatrix(rborist_dreaction, test_set$dreaction)
 # Confusion Matrix and Statistics
 #
 #           Reference
-# Prediction  1  2  3  4  5
-#         1  5  0  0  0  0
-#         2  0 13  0  0  0
-#         3  0  0 49  1  0
-#         4  0  0  0 84  0
-#         5  0  0  0  0 60
+# Prediction ni vli li hi_tf vhi_tf
+#     ni     59   0  0     0      0
+#     vli     0  84  0     0      0
+#     li      0   0 46     0      0
+#     hi_tf   0   0  2    13      0
+#     vhi_tf  0   0  0     0      5
 #
 # Overall Statistics
 #
-# Accuracy : 0.995
-# 95% CI : (0.974, 1)
-# No Information Rate : 0.401
+# Accuracy : 0.99
+# 95% CI : (0.966, 0.999)
+# No Information Rate : 0.402
 # P-Value [Acc > NIR] : <2e-16
 #
-# Kappa : 0.993
+# Kappa : 0.986
 #
 # Mcnemar's Test P-Value : NA
 #
 # Statistics by Class:
 #
-#                      Class: 1 Class: 2 Class: 3 Class: 4 Class: 5
-# Sensitivity            1.0000   1.0000    1.000    0.988    1.000
-# Specificity            1.0000   1.0000    0.994    1.000    1.000
-# Pos Pred Value         1.0000   1.0000    0.980    1.000    1.000
-# Neg Pred Value         1.0000   1.0000    1.000    0.992    1.000
-# Prevalence             0.0236   0.0613    0.231    0.401    0.283
-# Detection Rate         0.0236   0.0613    0.231    0.396    0.283
-# Detection Prevalence   0.0236   0.0613    0.236    0.396    0.283
-# Balanced Accuracy      1.0000   1.0000    0.997    0.994    1.000
+#                      Class: ni Class: vli Class: li Class: hi_tf Class: vhi_tf
+# Sensitivity              1.000      1.000     0.958       1.0000        1.0000
+# Specificity              1.000      1.000     1.000       0.9898        1.0000
+# Pos Pred Value           1.000      1.000     1.000       0.8667        1.0000
+# Neg Pred Value           1.000      1.000     0.988       1.0000        1.0000
+# Prevalence               0.282      0.402     0.230       0.0622        0.0239
+# Detection Rate           0.282      0.402     0.220       0.0622        0.0239
+# Detection Prevalence     0.282      0.402     0.220       0.0718        0.0239
+# Balanced Accuracy        1.000      1.000     0.979       0.9949        1.0000
 
 # higher than the accuracies of the k-nearest neighbor model and the recursive partitioning and regression trees model
 
@@ -478,138 +467,67 @@ qda_model <- train(dreaction ~ ., train_set, method = "qda")
 qda_model
 # Quadratic Discriminant Analysis
 #
-# 844 samples
+# 847 samples
 # 4 predictor
-# 5 classes: '1', '2', '3', '4', '5'
+# 5 classes: 'ni', 'vli', 'li', 'hi_tf', 'vhi_tf'
 #
 # No pre-processing
 # Resampling: Bootstrapped (25 reps)
-# Summary of sample sizes: 844, 844, 844, 844, 844, 844, ...
+# Summary of sample sizes: 847, 847, 847, 847, 847, 847, ...
 # Resampling results:
 #
-#   Accuracy  Kappa
-# 0.724     0.602
+# Accuracy  Kappa
+# 0.727     0.601
 
 qda_dreaction <- predict(qda_model, test_set)
 confusionMatrix(qda_dreaction, test_set$dreaction)
 # Confusion Matrix and Statistics
 #
 #           Reference
-# Prediction  1  2  3  4  5
-#         1  4  2  1  0  0
-#         2  1  9  2  0  0
-#         3  0  2 26 10  0
-#         4  0  0 20 71 12
-#         5  0  0  0  4 48
+# Prediction ni vli li hi_tf vhi_tf
+#     ni     48   2  1     0      0
+#     vli     9  67 16     0      0
+#     li      2  15 31     4      0
+#     hi_tf   0   0  0     8      0
+#     vhi_tf  0   0  0     1      5
 #
 # Overall Statistics
 #
-# Accuracy : 0.745
-# 95% CI : (0.681, 0.802)
-# No Information Rate : 0.401
+# Accuracy : 0.761
+# 95% CI : (0.697, 0.817)
+# No Information Rate : 0.402
 # P-Value [Acc > NIR] : <2e-16
 #
-# Kappa : 0.631
+# Kappa : 0.655
 #
 # Mcnemar's Test P-Value : NA
 #
 # Statistics by Class:
 #
-#                      Class: 1 Class: 2 Class: 3 Class: 4 Class: 5
-# Sensitivity            0.8000   0.6923    0.531    0.835    0.800
-# Specificity            0.9855   0.9849    0.926    0.748    0.974
-# Pos Pred Value         0.5714   0.7500    0.684    0.689    0.923
-# Neg Pred Value         0.9951   0.9800    0.868    0.872    0.925
-# Prevalence             0.0236   0.0613    0.231    0.401    0.283
-# Detection Rate         0.0189   0.0425    0.123    0.335    0.226
-# Detection Prevalence   0.0330   0.0566    0.179    0.486    0.245
-# Balanced Accuracy      0.8928   0.8386    0.728    0.792    0.887
+#                      Class: ni Class: vli Class: li Class: hi_tf Class: vhi_tf
+# Sensitivity              0.814      0.798     0.646       0.6154        1.0000
+# Specificity              0.980      0.800     0.870       1.0000        0.9951
+# Pos Pred Value           0.941      0.728     0.596       1.0000        0.8333
+# Neg Pred Value           0.930      0.855     0.892       0.9751        1.0000
+# Prevalence               0.282      0.402     0.230       0.0622        0.0239
+# Detection Rate           0.230      0.321     0.148       0.0383        0.0239
+# Detection Prevalence     0.244      0.440     0.249       0.0383        0.0287
+# Balanced Accuracy        0.897      0.799     0.758       0.8077        0.9975
 
-# higher than the accuracy of the k-nearest neighbor model
-# lower than the accuracies of the recursive partitioning and regression trees model and the Rborist model
+# lower than the accuracies of the k-nearest neighbor model, recursive partitioning and regression trees model and the Rborist model
 
 
 
 # we examine the errors of the Rborist model
 
 which_index <- c(which(rborist_dreaction != test_set$dreaction))
-# [1] 138
-tibble(rborist = rborist_dreaction[which_index], rpart = rpart_dreaction[which_index], qda = qda_dreaction[which_index], knn = knn_dreaction[which_index], test_set = test_set$dreaction[which_index]) |> print(n = 40)
-# A tibble: 1 × 5
-#   rborist rpart qda   knn   test_set
-#   <fct>   <fct> <fct> <fct> <fct>
-# 1 3       3     3     4     4
+# [1] 15 61
+tibble(rborist = rborist_dreaction[which_index], rpart = rpart_dreaction[which_index], qda = qda_dreaction[which_index], knn = knn_dreaction[which_index], test_set = test_set$dreaction[which_index])
+# A tibble: 2 × 5
+# rborist rpart qda   knn   test_set
+# <fct>   <fct> <fct> <fct> <fct>
+# 1 hi_tf   hi_tf li    li    li
+# 2 hi_tf   hi_tf li    li    li
 
 # the error cannot be improved with an ensemble
-
-
-
-# we retrain and retest the Rborist model using the baseline CD4 count and RNA load only
-
-set.seed(70, sample.kind = "Rounding") # if using R 3.6 or later
-# set.seed(70) # if using R 3.5 or earlier
-rborist_model1 <- train(dreaction ~ bcd4 + brna, train_set, method = "Rborist", tuneGrid = expand.grid(predFixed = seq(1, 2), minNode = seq(1, 4)))
-ggplot(rborist_model1, highlight = TRUE)
-rborist_model1
-# Random Forest
-#
-# 844 samples
-# 2 predictor
-# 5 classes: '1', '2', '3', '4', '5'
-#
-# No pre-processing
-# Resampling: Bootstrapped (25 reps)
-# Summary of sample sizes: 844, 844, 844, 844, 844, 844, ...
-# Resampling results across tuning parameters:
-#
-#   predFixed  minNode  Accuracy  Kappa
-# 1          1        0.776     0.676
-# 1          2        0.779     0.679
-# 1          3        0.777     0.677
-# 1          4        0.780     0.680
-# 2          1        0.757     0.650
-# 2          2        0.758     0.651
-# 2          3        0.759     0.653
-# 2          4        0.760     0.653
-#
-# Accuracy was used to select the optimal model using the largest value.
-# The final values used for the model were predFixed = 1 and minNode = 4.
-
-rborist_dreaction1 <- predict(rborist_model1, test_set)
-confusionMatrix(rborist_dreaction1, test_set$dreaction)
-# Confusion Matrix and Statistics
-#
-# Reference
-# Prediction  1  2  3  4  5
-# 1  1  0  0  0  0
-# 2  1  7  3  0  0
-# 3  3  5 29  4  0
-# 4  0  1 17 79  0
-# 5  0  0  0  2 60
-#
-# Overall Statistics
-#
-# Accuracy : 0.83
-# 95% CI : (0.773, 0.878)
-# No Information Rate : 0.401
-# P-Value [Acc > NIR] : <2e-16
-#
-# Kappa : 0.752
-#
-# Mcnemar's Test P-Value : NA
-#
-# Statistics by Class:
-#
-#                      Class: 1 Class: 2 Class: 3 Class: 4 Class: 5
-# Sensitivity           0.20000   0.5385    0.592    0.929    1.000
-# Specificity           1.00000   0.9799    0.926    0.858    0.987
-# Pos Pred Value        1.00000   0.6364    0.707    0.814    0.968
-# Neg Pred Value        0.98104   0.9701    0.883    0.948    1.000
-# Prevalence            0.02358   0.0613    0.231    0.401    0.283
-# Detection Rate        0.00472   0.0330    0.137    0.373    0.283
-# Detection Prevalence  0.00472   0.0519    0.193    0.458    0.292
-# Balanced Accuracy     0.60000   0.7592    0.759    0.894    0.993
-
-# higher than the accuracies of the k-nearest neighbor model and the quadratic discriminant analysis model
-# lower than the accuracies of the recursive partitioning and regression trees model and the Rborist model
 
