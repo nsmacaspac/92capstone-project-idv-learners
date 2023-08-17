@@ -173,11 +173,11 @@ str(dataset2)
 
 
 
-# CD4 COUNT AND RNA LOAD
+# PREDICTORS
 
 
 
-# we visualize the predictors and outcome of the preprocessed dataset
+# we visualize the predictors and outcome of the final dataset
 
 dataset2 |>
   ggplot(aes(brna, bcd4, color = dreaction)) +
@@ -201,7 +201,11 @@ dataset2 |>
 
 
 
-# we partition the preprocessed dataset
+# CLASSIFICATION MODELS
+
+
+
+# we partition the final dataset
 
 set.seed(20, sample.kind = "Rounding") # if using R 3.6 or later
 # set.seed(20) # if using R 3.5 or earlier
@@ -212,20 +216,7 @@ test_set <- dataset2[-train_index,]
 
 
 
-
-
-
-
-
-
-
-###############
-###   WIP   ###
-###############
-
-
-
-# we train and test the k-nearest neighbor model
+# we train and test the k-Nearest Neighbor Classification
 
 set.seed(30, sample.kind = "Rounding") # if using R 3.6 or later
 # set.seed(30) # if using R 3.5 or earlier
@@ -256,6 +247,10 @@ knn_model
 # The final value used for the model was k = 3.
 
 knn_dreaction <- predict(knn_model, test_set)
+head(knn_dreaction)
+# [1] hi_tf  li     vhi_tf li     vli    vli
+# Levels: ni vli li hi_tf vhi_tf
+
 confusionMatrix(knn_dreaction, test_set$dreaction)
 # Confusion Matrix and Statistics
 #
@@ -292,7 +287,7 @@ confusionMatrix(knn_dreaction, test_set$dreaction)
 
 
 
-# we train and test the recursive partitioning and regression trees model
+# we train and test the Recursive Partitioning and Regression Trees model
 
 set.seed(40, sample.kind = "Rounding") # if using R 3.6 or later
 # set.seed(40) # if using R 3.5 or earlier
@@ -325,11 +320,11 @@ rpart_model
 #
 # Accuracy was used to select the optimal model using the largest value.
 # The final value used for the model was cp = 0.
-
 plot(rpart_model$finalModel, margin = 0.05) # margin adjusts the plot size
 text(rpart_model$finalModel, cex = 0.8) # cex adjusts the label size
 
 rpart_dreaction <- predict(rpart_model, test_set)
+
 confusionMatrix(rpart_dreaction, test_set$dreaction)
 # Confusion Matrix and Statistics
 #
@@ -363,8 +358,7 @@ confusionMatrix(rpart_dreaction, test_set$dreaction)
 # Detection Rate           0.273      0.402     0.220       0.0574        0.0239
 # Detection Prevalence     0.273      0.411     0.225       0.0670        0.0239
 # Balanced Accuracy        0.983      0.992     0.976       0.9564        1.0000
-
-# higher than the accuracy of the k-nearest neighbor model
+# higher than the accuracy of the k-Nearest Neighbor Classification
 
 
 
@@ -408,7 +402,6 @@ rborist_model
 #
 # Accuracy was used to select the optimal model using the largest value.
 # The final values used for the model were predFixed = 4 and minNode = 1.
-
 varImp(rborist_model)
 # Rborist variable importance
 #
@@ -417,10 +410,10 @@ varImp(rborist_model)
 # fcd4    44.9
 # bcd4     7.5
 # frna     0.0
-
 # baseline RNA load is the most important predictor
 
 rborist_dreaction <- predict(rborist_model, test_set)
+
 confusionMatrix(rborist_dreaction, test_set$dreaction)
 # Confusion Matrix and Statistics
 #
@@ -454,12 +447,11 @@ confusionMatrix(rborist_dreaction, test_set$dreaction)
 # Detection Rate           0.282      0.402     0.220       0.0622        0.0239
 # Detection Prevalence     0.282      0.402     0.220       0.0718        0.0239
 # Balanced Accuracy        1.000      1.000     0.979       0.9949        1.0000
-
-# higher than the accuracies of the k-nearest neighbor model and the recursive partitioning and regression trees model
-
+# higher than the accuracies of the k-Nearest Neighbor Classification and the Recursive Partitioning and Regression Trees model
 
 
-# we train and test the quadratic discriminant analysis model
+
+# we train and test the Quadratic Discriminant Analysis
 
 set.seed(60, sample.kind = "Rounding") # if using R 3.6 or later
 # set.seed(60) # if using R 3.5 or earlier
@@ -480,6 +472,7 @@ qda_model
 # 0.727     0.601
 
 qda_dreaction <- predict(qda_model, test_set)
+
 confusionMatrix(qda_dreaction, test_set$dreaction)
 # Confusion Matrix and Statistics
 #
@@ -513,8 +506,11 @@ confusionMatrix(qda_dreaction, test_set$dreaction)
 # Detection Rate           0.230      0.321     0.148       0.0383        0.0239
 # Detection Prevalence     0.244      0.440     0.249       0.0383        0.0287
 # Balanced Accuracy        0.897      0.799     0.758       0.8077        0.9975
+# lower than the accuracies of the k-Nearest Neighbor Classification, Recursive Partitioning and Regression Trees model, and Rborist model
 
-# lower than the accuracies of the k-nearest neighbor model, recursive partitioning and regression trees model and the Rborist model
+
+
+# MULTI-CLASS DISCRIMINATIVE CLASSIFICATION MODEL
 
 
 
@@ -528,6 +524,5 @@ tibble(rborist = rborist_dreaction[which_index], rpart = rpart_dreaction[which_i
 # <fct>   <fct> <fct> <fct> <fct>
 # 1 hi_tf   hi_tf li    li    li
 # 2 hi_tf   hi_tf li    li    li
-
 # the error cannot be improved with an ensemble
 

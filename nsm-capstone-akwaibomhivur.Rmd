@@ -54,7 +54,7 @@ include_graphics("fig1.png")
 
 The immunological marker CD4 count is given in cells per cubic millimeter (Ekpenyong et al. 2021a, 8). The viral RNA load is expressed in times 10^2^ copies (Ekpenyong, Etebong, and Jackson 2019, 10). The weight ranges from 4.7 to 125 kg on account of the presence of pediatric patients (Ekpenyong, Etebong, and Jackson 2019, 2). The three-drug combinations of antiretroviral therapy are a complementary mix of nucleoside reverse transcriptase inhibitors tenofovir (TDF), lamivudine (3TC) and zidovudine (AZT), and non-nucleoside reverse transcriptase inhibitors efavirenz (EFV) and nivarapine (NVP) given in the first 6 months of treatment (Ekpenyong et al. 2021a, 8).
 
-Patient response and drug reaction were quantified and classified in the 2019 study using expaert domain knowledge and the advanced method of interval type-2 fuzzy logic system (Ekpenyong, Etebong, and Jackson 2019, 4, 7). The drug reaction classification uses a binary system to indicate very high interaction (C1), high interaction (C2), low interaction (C3), very low interaction (C4), and no interaction (C5; Ekpenyong, Etebong, and Jackson 2019, 11). A low response rate signifies high to very high drug interactions and treatment failure, whereas a high response rate denotes low to no drug interactions (Ekpenyong, Etebong, and Jackson 2019, 10, 13).
+Patient response and drug reaction were quantified and classified in the 2019 study using expert domain knowledge and the advanced method of interval type-2 fuzzy logic system (Ekpenyong, Etebong, and Jackson 2019, 4, 7). The drug reaction classification uses a binary system to indicate very high interaction (C1), high interaction (C2), low interaction (C3), very low interaction (C4), and no interaction (C5; Ekpenyong, Etebong, and Jackson 2019, 11). A low response rate signifies high to very high drug interactions and treatment failure, whereas a high response rate denotes low to no drug interactions (Ekpenyong, Etebong, and Jackson 2019, 10, 13).
 
 
 ### _Tidy Dataset_
@@ -154,12 +154,17 @@ dataset2 |>
 ```
 
 
-## Classification Algorithms
+## Classification Models
 
 
-In the preprocessed dataset with the bcd4, fcd4, brna, and frna variables as predictors and the dreaction variable as outcome, there were only 1,056 observations. The dataset was split into 80% train set and 20% test set using the createDataPartition function to maximize the data available for both training and testing. The function additionally preserved the distribution of the five outcome classes of the dreaction variable: ni, vli, li, hi_tf, and vhi_tf (Kuhn 2019).
+In the final dataset with the bcd4, fcd4, brna, and frna variables as predictors and the dreaction variable as outcome, there were only 1,056 observations. The dataset was split into 80% train set and 20% test set using the createDataPartition function to maximize the data available for both training and testing. The function additionally preserved the distribution of the five outcome classes of the dreaction variable: ni, vli, li, hi_tf, and vhi_tf (Kuhn 2019).
 
 ```{r}
+if(!require(caret)) install.packages("caret", repos = "http://cran.us.r-project.org")
+library(caret)
+```
+
+```{r, echo = TRUE}
 set.seed(20, sample.kind = "Rounding") # if using R 3.6 or later
 # set.seed(20) # if using R 3.5 or earlier
 # for reproducibility during assessment
@@ -168,13 +173,13 @@ train_set <- dataset2[train_index,]
 test_set <- dataset2[-train_index,]
 ```
 
-Classification algorithms introduced in the program that can possibly accommodate the nonlinear nature of the decision boundaries of the outcome classes (similar to what was observed in fig. 3) were successively trained on the train set with the train function. We discuss them in the following subsections. The streamlined dataset allowed for the use of the default resampling method of the function that is bootstrapping for twenty-five times, which would have been time-consuming otherwise. Thereafter, the algorithms were then evaluated for the accuracy of their outcome prediction in the test set.
+Classification models introduced in the program that can possibly accommodate the nonlinear nature of the decision boundaries of the outcome classes (similar to what was observed in fig. 3) were successively trained on the train set with the train function. We discuss them in the following subsections. The streamlined dataset allowed for the use of the default resampling method of the function that is bootstrapping for twenty-five times, which would have been time-consuming otherwise. Thereafter, the models were evaluated for the accuracy of their outcome prediction in the test set.
 
 
-### _k-Nearest Neighbor Model_
+### _k-Nearest Neighbor Classification_
 
 
--discriminative classification algorithm(Haugh 2017)
+-discriminative classification model(Haugh 2017)
 
 - we find the k nearest
 neighbors of x and use majority voting of these neighbors to classify x
@@ -188,39 +193,106 @@ neighbors of x and use majority voting of these neighbors to classify x
 
 - ask if the prevalence of the outcome is expected to be the same in future data; is the sample biased? (Irizarry 2002)
 
+The optimal model was tuned at 3 nearest neighbors.
+
+Its predicted drug reaction was obtained using the predict function. This was compared with the observed drug reaction in the test set utilizing the confusionMatrix function, which resulted in an accuracy of 88%. This level of accuracy came with good sensitivity and specificity for most outcome classes, but the model had a low true positive detection rate for the class hi_tf.
+
+```{r, echo = TRUE}
+set.seed(30, sample.kind = "Rounding") # if using R 3.6 or later
+# set.seed(30) # if using R 3.5 or earlier
+knn_model <- train(dreaction ~ ., train_set, method = "knn", tuneGrid = data.frame(k = seq(3, 9, 1))) # tunes neighbor number
+knn_model
+
+knn_dreaction <- predict(knn_model, test_set)
+head(knn_dreaction)
+
+confusionMatrix(knn_dreaction, test_set$dreaction)$overall["Accuracy"]
+confusionMatrix(knn_dreaction, test_set$dreaction)$byClass[, 1:2]
+```
+
 
 ### _Recursive Partitioning and Regression Trees Model_
 
 
--discriminative classification algorithm (Haugh 2017)
+-discriminative classification model (Haugh 2017)
 
-- complexity paarmeter (Irizarry 2002)
+The model was optimized at a complexity parameter of 0. It was visualized as shown with the plot and text functions for easy interpretation (Irizarry 2002).
 
--highly interpretable; easy to visualize (Irizarry 2002)
+The accuracy of its outcome prediction was at 97.6%, higher than that from the k-Nearest Neighbor Classification and with high sensitivity and specificity for all outcome classes.
+
+```{r, echo = TRUE}
+set.seed(40, sample.kind = "Rounding") # if using R 3.6 or later
+# set.seed(40) # if using R 3.5 or earlier
+rpart_model <- train(dreaction ~ ., train_set, method = "rpart", tuneGrid = data.frame(cp = seq(0, 0.1, 0.01))) # tunes tree complexity
+rpart_model
+plot(rpart_model$finalModel, margin = 0.05) # margin adjusts the plot size
+text(rpart_model$finalModel, cex = 0.8) # cex adjusts the label size
+
+rpart_dreaction <- predict(rpart_model, test_set)
+
+confusionMatrix(rpart_dreaction, test_set$dreaction)$overall["Accuracy"]
+confusionMatrix(rpart_dreaction, test_set$dreaction)$byClass[, 1:2]
+```
 
 
 ### _Rborist Model_
 
 
--discriminative classification algorithm (Haugh 2017)
+-discriminative classification model (Haugh 2017)
 
 - The goal is to improve prediction performance and reduce instability by averaging multiple decision trees (Irizarry 2002)
 
 - A disadvantage of random forests is that we lose interpretability.
 An approach that helps with interpretability is to examine variable importance. varImp function to know which  predictors are used the most (Irizarry 2002)
 
+The optimal model was tuned at 4 predictors to test for a given split and a minimum node size of 1. The baseline RNA load is the most important predictor.
 
-### _Quadratic Discriminant Analysis Model_
+Its predicted drug reaction had an accuracy of 99%, higher than those from
+the k-Nearest Neighbor Classification and the Recursive Partitioning and Regression Trees model. This accuracy was accompanied by excellent sensitivity and specificity for all outcome classes.
+
+```{r}
+if(!require(Rborist)) install.packages("Rborist", repos = "http://cran.us.r-project.org")
+library(Rborist)
+```
+
+```{r, echo = TRUE}
+set.seed(50, sample.kind = "Rounding") # if using R 3.6 or later
+# set.seed(50) # if using R 3.5 or earlier
+rborist_model <- train(dreaction ~ ., train_set, method = "Rborist", tuneGrid = expand.grid(predFixed = seq(1, 4), minNode = seq(1, 4))) # tunes combinations of predictor number and node size
+rborist_model
+varImp(rborist_model)
+
+rborist_dreaction <- predict(rborist_model, test_set)
+
+confusionMatrix(rborist_dreaction, test_set$dreaction)$overall["Accuracy"]
+confusionMatrix(rborist_dreaction, test_set$dreaction)$byClass[, 1:2]
+```
 
 
--generative classification algorithm (Haugh 2017)
+### _Quadratic Discriminant Analysis_
+
+
+-generative classification model (Haugh 2017)
 
 -The quadratic discriminant analysis is generally preferred due to greater flexibility of the decision boundaries (Haugh 2017)
 
+The accuracy of its outcome prediction was at 76.1%, lower than those from the k-Nearest Neighbor Classification, the Recursive Partitioning and Regression Trees model, and the Rborist model. The accuracy came with good specificity, but the model had mediocre true positive detection rates for the classes li and hi_tf.
 
-## Classification Model
+```{r, echo = TRUE}
+set.seed(60, sample.kind = "Rounding") # if using R 3.6 or later
+# set.seed(60) # if using R 3.5 or earlier
+qda_model <- train(dreaction ~ ., train_set, method = "qda")
+qda_model
 
-- discriminatuve classification algorithm  (Haugh 2017)
+qda_dreaction <- predict(qda_model, test_set)
+
+confusionMatrix(qda_dreaction, test_set$dreaction)$overall["Accuracy"]
+confusionMatrix(qda_dreaction, test_set$dreaction)$byClass[, 1:2]
+```
+
+## Multi-class Discriminative Classification Model
+
+- discriminatuve classification model  (Haugh 2017)
 
 - results of model performances
 
