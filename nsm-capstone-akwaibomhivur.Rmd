@@ -14,7 +14,7 @@ opts_chunk$set(
 	collapse = TRUE,
 	warning = FALSE,
 	message = FALSE,
-	out.width = "80%",
+	out.width = "70%",
 	fig.align = "center"
 )
 ```
@@ -45,7 +45,12 @@ if(!file.exists("mmc1.xlsx")) download.file("https://www.ncbi.nlm.nih.gov/pmc/ar
 
 if(!require(readxl)) install.packages("readxl", repos = "http://cran.us.r-project.org") # require() checks if the package exists
 library(readxl)
-dataset <- as.data.frame(read_xlsx("mmc1.xlsx", range = "N27:AB1083")) # range reads the Unique Records table, which is the combined version of the Individual Treatment Change Episodes table
+```
+
+```{r, echo = TRUE}
+dataset <- as.data.frame(read_xlsx("mmc1.xlsx", range = "N27:AB1083")) # range reads 
+ # the Unique Records table, which is the combined version of 
+ # the Individual Treatment Change Episodes table
 ```
 
 ```{r fig1, fig.cap = "First rows of the Unique Records table of the Akwa Ibom HIV Database."}
@@ -63,7 +68,8 @@ Patient response and drug reaction were quantified and classified in the 2019 st
 The dataset was rendered into tidy format to prepare it for preprocessing. The fifteen columns were renamed consistently with their aforementioned descriptions, with vhi_tf corresponding to very high interaction_treatment failure and ni corresponding to no interaction. Missing values were not detected.
 
 ```{r, echo = TRUE}
-colnames(dataset) <- c("id", "sex", "bcd4", "fcd4", "brna", "frna", "bweight", "fweight", "therapy", "response", "vhi_tf", "hi_tf", "li", "vli", "ni")
+colnames(dataset) <- c("id", "sex", "bcd4", "fcd4", "brna", "frna", "bweight", "fweight", 
+"therapy", "response", "vhi_tf", "hi_tf", "li", "vli", "ni")
 head(dataset, n = 5)
 ```
 
@@ -84,7 +90,8 @@ dataset1 <- dataset |>
                               hi_tf == 1 ~ "hi_tf",
                               li == 1 ~ "li",
                               vli == 1 ~ "vli",
-                              ni == 1 ~ "ni")) |> # relabels drug reactions as vhi_tf to ni and merges them under a newly defined dreaction column
+                              ni == 1 ~ "ni")) |> # relabels drug reactions as 
+  # vhi_tf to ni and merges them under a newly defined dreaction column
   select(-vhi_tf, -hi_tf, -li, -vli, -ni)
 head(dataset1, n = 5)
 ```
@@ -121,13 +128,14 @@ The preprocessed dataset was streamlined to contain only these pertinent predict
 
 ```{r, echo = TRUE}
 dataset2 <- dataset1 |>
-  select(bcd4, fcd4, brna, frna, dreaction) |> # keeps CD4 count and RNA load as predictors and drug reaction as outcome
+  select(bcd4, fcd4, brna, frna, dreaction) |> # keeps CD4 count and RNA load as 
+  # predictors and drug reaction as outcome
   mutate(dreaction = factor(dreaction, c("ni", "vli", "li", "hi_tf", "vhi_tf")))
 head(dataset2, n = 5)
 ```
 
 
-## Predictors
+## Predictors and Outcome
 
 
 The predictors CD4 count and RNA load are measures of immune system health and HIV status, respectively (Ekpenyong, Etebong, and Jackson 2019, 10; World Health Organization, n.d.). They are crucial markers of drug reaction and treatment failure that can be obtained from simple laboratory tests in settings with limited resources for the costly HIV genotyping to determine drug resistance (Isaakidis et al. 2010, 7; Revell et al. 2010, 605).
@@ -143,21 +151,21 @@ dataset2 |>
   geom_smooth(color = "black", size = 0.5, method = "lm", se = FALSE) + # adds a trend line
   scale_x_continuous("Baseline RNA Load", limits = c(100, 700)) +
   scale_y_continuous("Baseline CD4 Count", limits = c(0, 2000)) + # encompasses the full range of the axes of baseline and follow-up data for ease of comparison
-  scale_color_discrete(name = "Drug Reaction")
+  scale_color_discrete(name = "Drug Reaction", type = c("dodgerblue4", "green4", "yellow2", "orange3", "tomato4"))
 dataset2 |>
   ggplot(aes(frna, fcd4, color = dreaction)) +
   geom_point() +
   geom_smooth(color = "black", size = 0.5, method = "lm", se = FALSE) +
   scale_x_continuous("Follow-up RNA Load", limits = c(100, 700)) +
   scale_y_continuous("Follow-up CD4 Count", limits = c(0, 2000)) +
-  scale_color_discrete(name = "Drug Reaction")
+  scale_color_discrete(name = "Drug Reaction", type = c("dodgerblue4", "green4", "yellow2", "orange3", "tomato4"))
 ```
 
 
 ## Classification Models
 
 
-In the final dataset with the bcd4, fcd4, brna, and frna variables as predictors and the dreaction variable as outcome, there were only 1,056 observations. The dataset was split into 80% train set and 20% test set using the createDataPartition function to maximize the data available for both training and testing. The function additionally preserved the distribution of the five outcome classes of the dreaction variable: ni, vli, li, hi_tf, and vhi_tf (Kuhn 2019).
+In the final dataset with the bcd4, fcd4, brna, and frna variables as predictors and the dreaction variable as outcome, there were only 1,056 observations. The dataset was split into 80% train set and 20% test set using the createDataPartition function to maximize the data available for both training and testing. The function additionally preserves the distribution of the five outcome classes of the dreaction variable: ni, vli, li, hi_tf, and vhi_tf (Kuhn 2019).
 
 ```{r}
 if(!require(caret)) install.packages("caret", repos = "http://cran.us.r-project.org")
@@ -173,39 +181,25 @@ train_set <- dataset2[train_index,]
 test_set <- dataset2[-train_index,]
 ```
 
-Classification models introduced in the program that can possibly accommodate the nonlinear nature of the decision boundaries of the outcome classes (similar to what was observed in fig. 3) were successively trained on the train set with the train function. We discuss them in the following subsections. The streamlined dataset allowed for the use of the default resampling method of the function that is bootstrapping for twenty-five times, which would have been time-consuming otherwise. Thereafter, the models were evaluated for the accuracy of their outcome prediction in the test set.
+Classification models introduced in the program that can possibly accommodate the nonlinear nature of the decision boundaries of the outcome classes (similar to what was observed in fig. 3) were successively optimized on the train set with the train function (Haugh 2017, Irizarry 2002). We discuss them in the following subsections. The streamlined dataset allowed for the use of the default resampling method of the function that is bootstrapping for twenty-five times, which would have been time-consuming otherwise. Thereafter, the models were evaluated for the accuracy of their outcome prediction in the test set. The sensitivity or true positive rate and specificity or true negative rate of their prediction were also checked to rule out the effect of prevalence (Irizarry 2002).
 
 
 ### _k-Nearest Neighbor Classification_
 
 
--discriminative classification model(Haugh 2017)
+The k-Nearest Neighbor Classification determines the class of a data point based on the majority class among its neighboring data points  (Haugh 2017). The number of neighbors k can be optimized to maximize the accuracy  (Irizarry 2002). In the train set, the optimal model was tuned at 3 neighbors, with an accuracy of 80.4%.
 
-- we find the k nearest
-neighbors of x and use majority voting of these neighbors to classify x
-... and that maximizes the accuracy (Irizarry 2002)
-
-- kNN is easier to adapt to non-linear dimensions (Irizarry 2002)
-
-- accuracy, proportion of predicted correctly (Irizarry 2002)
-
-- check sensitivity and specificity to remove the clouding by the prevalence of our assessment (Irizarry 2002)
-
-- ask if the prevalence of the outcome is expected to be the same in future data; is the sample biased? (Irizarry 2002)
-
-The optimal model was tuned at 3 nearest neighbors.
-
-Its predicted drug reaction was obtained using the predict function. This was compared with the observed drug reaction in the test set utilizing the confusionMatrix function, which resulted in an accuracy of 88%. This level of accuracy came with good sensitivity and specificity for most outcome classes, but the model had a low true positive detection rate for the class hi_tf.
+Its predicted drug reaction was obtained using the predict function. This was compared with the observed drug reaction in the test set utilizing the confusionMatrix function, which resulted in an accuracy of 88%. The accuracy came with good sensitivity and specificity for most outcome classes, but the model had a low true positive detection rate for the class hi_tf.
 
 ```{r, echo = TRUE}
 set.seed(30, sample.kind = "Rounding") # if using R 3.6 or later
 # set.seed(30) # if using R 3.5 or earlier
-knn_model <- train(dreaction ~ ., train_set, method = "knn", tuneGrid = data.frame(k = seq(3, 9, 1))) # tunes neighbor number
+knn_model <- train(dreaction ~ ., train_set, method = "knn", 
+ tuneGrid = data.frame(k = seq(3, 9, 1))) # tunes neighbor number
 knn_model
 
 knn_dreaction <- predict(knn_model, test_set)
 head(knn_dreaction)
-
 confusionMatrix(knn_dreaction, test_set$dreaction)$overall["Accuracy"]
 confusionMatrix(knn_dreaction, test_set$dreaction)$byClass[, 1:2]
 ```
@@ -214,22 +208,18 @@ confusionMatrix(knn_dreaction, test_set$dreaction)$byClass[, 1:2]
 ### _Recursive Partitioning and Regression Trees Model_
 
 
--discriminative classification model (Haugh 2017)
+The Recursive Partitioning and Regression Trees model forms successive dichotomous data splitting to derive the class of a data point, such that it looks like an inverted tree (ScienceDirect 2007). The complexity parameter at which the tree will be pruned in the case of an unimportant data splitting can be tuned (Therneau, Atkinson, and Ripley 2022). This model was optimized on the train set at a complexity parameter of 0 and an accuracy of 96.1%.
 
-The model was optimized at a complexity parameter of 0. It was visualized as shown with the plot and text functions for easy interpretation (Irizarry 2002).
-
-The accuracy of its outcome prediction was at 97.6%, higher than that from the k-Nearest Neighbor Classification and with high sensitivity and specificity for all outcome classes.
+The test accuracy of its outcome prediction was at 97.6%, higher than that from the preceding model and with high sensitivity and specificity for all outcome classes.
 
 ```{r, echo = TRUE}
 set.seed(40, sample.kind = "Rounding") # if using R 3.6 or later
 # set.seed(40) # if using R 3.5 or earlier
-rpart_model <- train(dreaction ~ ., train_set, method = "rpart", tuneGrid = data.frame(cp = seq(0, 0.1, 0.01))) # tunes tree complexity
+rpart_model <- train(dreaction ~ ., train_set, method = "rpart", 
+ tuneGrid = data.frame(cp = seq(0, 0.1, 0.01))) # tunes tree complexity
 rpart_model
-plot(rpart_model$finalModel, margin = 0.05) # margin adjusts the plot size
-text(rpart_model$finalModel, cex = 0.8) # cex adjusts the label size
 
 rpart_dreaction <- predict(rpart_model, test_set)
-
 confusionMatrix(rpart_dreaction, test_set$dreaction)$overall["Accuracy"]
 confusionMatrix(rpart_dreaction, test_set$dreaction)$byClass[, 1:2]
 ```
@@ -238,17 +228,9 @@ confusionMatrix(rpart_dreaction, test_set$dreaction)$byClass[, 1:2]
 ### _Rborist Model_
 
 
--discriminative classification model (Haugh 2017)
+The Rborist model improves on the prediction of the Recursive Partitioning and Regression Trees model using the average of multiple trees to classify a data point (Irizarry 2002). Its accuracy can be optimized through the number of predictors for data splitting and the minimum size of its terminal node. In the train set, the optimal model was tuned at 4 predictors and node size of 1, with an accuracy of 97.7%.
 
-- The goal is to improve prediction performance and reduce instability by averaging multiple decision trees (Irizarry 2002)
-
-- A disadvantage of random forests is that we lose interpretability.
-An approach that helps with interpretability is to examine variable importance. varImp function to know which  predictors are used the most (Irizarry 2002)
-
-The optimal model was tuned at 4 predictors to test for a given split and a minimum node size of 1. The baseline RNA load is the most important predictor.
-
-Its predicted drug reaction had an accuracy of 99%, higher than those from
-the k-Nearest Neighbor Classification and the Recursive Partitioning and Regression Trees model. This accuracy was accompanied by excellent sensitivity and specificity for all outcome classes.
+Its predicted drug reaction had a test accuracy of 99%, higher than those from the first two models. The accuracy was supported by excellent sensitivity and specificity for all outcome classes.
 
 ```{r}
 if(!require(Rborist)) install.packages("Rborist", repos = "http://cran.us.r-project.org")
@@ -258,12 +240,12 @@ library(Rborist)
 ```{r, echo = TRUE}
 set.seed(50, sample.kind = "Rounding") # if using R 3.6 or later
 # set.seed(50) # if using R 3.5 or earlier
-rborist_model <- train(dreaction ~ ., train_set, method = "Rborist", tuneGrid = expand.grid(predFixed = seq(1, 4), minNode = seq(1, 4))) # tunes combinations of predictor number and node size
+rborist_model <- train(dreaction ~ ., train_set, method = "Rborist", 
+ tuneGrid = expand.grid(predFixed = seq(1, 4), minNode = seq(1, 4))) # tunes combinations 
+  # of predictor number and terminal node size
 rborist_model
-varImp(rborist_model)
 
 rborist_dreaction <- predict(rborist_model, test_set)
-
 confusionMatrix(rborist_dreaction, test_set$dreaction)$overall["Accuracy"]
 confusionMatrix(rborist_dreaction, test_set$dreaction)$byClass[, 1:2]
 ```
@@ -272,11 +254,9 @@ confusionMatrix(rborist_dreaction, test_set$dreaction)$byClass[, 1:2]
 ### _Quadratic Discriminant Analysis_
 
 
--generative classification model (Haugh 2017)
+The Quadratic Discriminant Analysis classifies data points with flexible quadratic decision boundaries (Haugh 2017). Unlike the previous models, this does not have a parameter for tuning to maximize its accuracy. Accordingly, this model had the lowest training accuracy of 72.7%.
 
--The quadratic discriminant analysis is generally preferred due to greater flexibility of the decision boundaries (Haugh 2017)
-
-The accuracy of its outcome prediction was at 76.1%, lower than those from the k-Nearest Neighbor Classification, the Recursive Partitioning and Regression Trees model, and the Rborist model. The accuracy came with good specificity, but the model had mediocre true positive detection rates for the classes li and hi_tf.
+The test accuracy of its outcome prediction was at 76.1%, lower than those from the preceding models. The accuracy was accompanied by good specificity, but the model had mediocre true positive detection rates for the classes li and hi_tf.
 
 ```{r, echo = TRUE}
 set.seed(60, sample.kind = "Rounding") # if using R 3.6 or later
@@ -285,18 +265,29 @@ qda_model <- train(dreaction ~ ., train_set, method = "qda")
 qda_model
 
 qda_dreaction <- predict(qda_model, test_set)
-
 confusionMatrix(qda_dreaction, test_set$dreaction)$overall["Accuracy"]
 confusionMatrix(qda_dreaction, test_set$dreaction)$byClass[, 1:2]
 ```
 
+
 ## Multi-class Discriminative Classification Model
 
+
 - discriminatuve classification model  (Haugh 2017)
+
+- Random Forest
+
 
 - results of model performances
 
 -  the model with the best predictions on new data
+
+
+- therapy is not a predictor.
+
+-it must be noted that, due to the limited resources in the Nigerian environment, only 5 drugs combined into 3 therapies were possible (Ekpenyong, Etebong, and Jackson 2019, 3)
+
+- not overtrained
 
 - Two RF models were trained using .8000 TCEs without the use of
 genotypes, one with comprehensive and one with simplified
@@ -313,13 +304,29 @@ predictions. These studies suggest that with viral load monitoring in place,
 computational models could play an important future role in
 optimizing antiretroviral therapy in resource-limited settings. (Revell et al. 2010, 606)
 
+- A disadvantage of random forests is that we lose interpretability.
+An approach that helps with interpretability is to examine variable importance. varImp function to know which  predictors are used the most (Irizarry 2002)
+
+-  varImp and ggplot2 functions, The baseline RNA load is the most important predictor (fig. 4).
+
+```{r fig4, fig.cap = "Bar chart of the variable importance of the Rborist model."}
+ggplot(varImp(rborist_model)) +
+  geom_bar(stat = "identity", fill = "dodgerblue4") +
+  scale_x_discrete("Predictor")
+```
+
+-ensemble, which and tibble functions
+
+```{r, echo = TRUE}
+which_index <- c(which(rborist_dreaction != test_set$dreaction))
+# [1] 15 61
+tibble(rborist = rborist_dreaction[which_index], rpart = rpart_dreaction[which_index], 
+  qda = qda_dreaction[which_index], knn = knn_dreaction[which_index], 
+  test_set = test_set$dreaction[which_index])
+```
+
 
 ## Conclusion
-
-
-- therapy is not a predictor.
-
--it must be noted that, due to the limited resources in the Nigerian environment, only 5 drugs combined into 3 therapies were possible (Ekpenyong, Etebong, and Jackson 2019, 3)
 
 
 - meaningful decisions on antiretroviral therapy administration
@@ -349,6 +356,10 @@ Kuhn, Max. 2019. "The caret Package." Last modified March 27, 2019. [https://top
 
 Revell, A. D., D. Wang, R. Harrigan, R. L. Hamers, A. M. J. Wensing, F. DeWolf, M. Nelson, A.-M. Geretti, and B. A. Larder. 2010. "Modelling Response to HIV Therapy Without a Genotype: An Argument
 for Viral Load Monitoring in Resource-Limited Settings." _Journal of Antimicrobial Chemotherapy_ 65: 605-607. [https://doi.org/10.1093/jac/dkq032](https://doi.org/10.1093/jac/dkq032).
+
+ScienceDirect. 2007. "Recursive Partitioning." Accessed August 18, 2023. [https://www.sciencedirect.com/topics/medicine-and-dentistry/recursive-partitioning](https://www.sciencedirect.com/topics/medicine-and-dentistry/recursive-partitioning).
+
+Therneau, Terry, Beth Atkinson, and Brian Ripley. 2022. "Package ‘rpart’." Last modified October 21, 2022. [https://cran.r-project.org/web/packages/rpart/rpart.pdf](https://cran.r-project.org/web/packages/rpart/rpart.pdf).
 
 Wei, Taiyun, and Viliam Simko. 2021. "An Introduction to corrplot Package." Last modified November 18, 2021. [https://cran.r-project.org/web/packages/corrplot/vignettes/corrplot-intro.html](https://cran.r-project.org/web/packages/corrplot/vignettes/corrplot-intro.html).
 

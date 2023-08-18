@@ -173,7 +173,7 @@ str(dataset2)
 
 
 
-# PREDICTORS
+# PREDICTORS AND OUTCOME
 
 
 
@@ -185,7 +185,7 @@ dataset2 |>
   geom_smooth(color = "black", size = 0.5, method = "lm", se = FALSE) + # adds a trend line
   scale_x_continuous("Baseline RNA Load", limits = c(100, 700)) +
   scale_y_continuous("Baseline CD4 Count", limits = c(0, 2000)) + # encompasses the full range of the axes of baseline and follow-up data for ease of comparison
-  scale_color_discrete(name = "Drug Reaction") # fig3 in the Rmd file
+  scale_color_discrete(name = "Drug Reaction", type = c("dodgerblue4", "green4", "yellow2", "orange3", "tomato4")) # fig3 in the Rmd file
 # there is a general increase in CD4 count at follow-up
 
 dataset2 |>
@@ -194,9 +194,8 @@ dataset2 |>
   geom_smooth(color = "black", size = 0.5, method = "lm", se = FALSE) +
   scale_x_continuous("Follow-up RNA Load", limits = c(100, 700)) +
   scale_y_continuous("Follow-up CD4 Count", limits = c(0, 2000)) +
-  scale_color_discrete(name = "Drug Reaction")
+  scale_color_discrete(name = "Drug Reaction", type = c("dodgerblue4", "green4", "yellow2", "orange3", "tomato4"))
 # there is a general decrease in RNA load at follow-up
-
 # there are patients who retained a low CD4 count and high RNA load at follow-up
 
 
@@ -250,7 +249,6 @@ knn_dreaction <- predict(knn_model, test_set)
 head(knn_dreaction)
 # [1] hi_tf  li     vhi_tf li     vli    vli
 # Levels: ni vli li hi_tf vhi_tf
-
 confusionMatrix(knn_dreaction, test_set$dreaction)
 # Confusion Matrix and Statistics
 #
@@ -320,11 +318,8 @@ rpart_model
 #
 # Accuracy was used to select the optimal model using the largest value.
 # The final value used for the model was cp = 0.
-plot(rpart_model$finalModel, margin = 0.05) # margin adjusts the plot size
-text(rpart_model$finalModel, cex = 0.8) # cex adjusts the label size
 
 rpart_dreaction <- predict(rpart_model, test_set)
-
 confusionMatrix(rpart_dreaction, test_set$dreaction)
 # Confusion Matrix and Statistics
 #
@@ -358,7 +353,7 @@ confusionMatrix(rpart_dreaction, test_set$dreaction)
 # Detection Rate           0.273      0.402     0.220       0.0574        0.0239
 # Detection Prevalence     0.273      0.411     0.225       0.0670        0.0239
 # Balanced Accuracy        0.983      0.992     0.976       0.9564        1.0000
-# higher than the accuracy of the k-Nearest Neighbor Classification
+# higher than the test accuracy of the k-Nearest Neighbor Classification
 
 
 
@@ -402,18 +397,8 @@ rborist_model
 #
 # Accuracy was used to select the optimal model using the largest value.
 # The final values used for the model were predFixed = 4 and minNode = 1.
-varImp(rborist_model)
-# Rborist variable importance
-#
-#       Overall
-# brna   100.0
-# fcd4    44.9
-# bcd4     7.5
-# frna     0.0
-# baseline RNA load is the most important predictor
 
 rborist_dreaction <- predict(rborist_model, test_set)
-
 confusionMatrix(rborist_dreaction, test_set$dreaction)
 # Confusion Matrix and Statistics
 #
@@ -447,7 +432,7 @@ confusionMatrix(rborist_dreaction, test_set$dreaction)
 # Detection Rate           0.282      0.402     0.220       0.0622        0.0239
 # Detection Prevalence     0.282      0.402     0.220       0.0718        0.0239
 # Balanced Accuracy        1.000      1.000     0.979       0.9949        1.0000
-# higher than the accuracies of the k-Nearest Neighbor Classification and the Recursive Partitioning and Regression Trees model
+# higher than the test accuracies of the k-Nearest Neighbor Classification and the Recursive Partitioning and Regression Trees model
 
 
 
@@ -472,7 +457,6 @@ qda_model
 # 0.727     0.601
 
 qda_dreaction <- predict(qda_model, test_set)
-
 confusionMatrix(qda_dreaction, test_set$dreaction)
 # Confusion Matrix and Statistics
 #
@@ -506,11 +490,20 @@ confusionMatrix(qda_dreaction, test_set$dreaction)
 # Detection Rate           0.230      0.321     0.148       0.0383        0.0239
 # Detection Prevalence     0.244      0.440     0.249       0.0383        0.0287
 # Balanced Accuracy        0.897      0.799     0.758       0.8077        0.9975
-# lower than the accuracies of the k-Nearest Neighbor Classification, Recursive Partitioning and Regression Trees model, and Rborist model
+# lower than the test accuracies of the k-Nearest Neighbor Classification, Recursive Partitioning and Regression Trees model, and Rborist model
 
 
 
 # MULTI-CLASS DISCRIMINATIVE CLASSIFICATION MODEL
+
+
+
+# we visualize the variable importance of the Rborist model
+
+ggplot(varImp(rborist_model)) +
+  geom_bar(stat = "identity", fill = "dodgerblue4") +
+  scale_x_discrete("Predictor") # fig4 in the Rmd file
+# baseline RNA load is the most important predictor
 
 
 
@@ -520,9 +513,10 @@ which_index <- c(which(rborist_dreaction != test_set$dreaction))
 # [1] 15 61
 tibble(rborist = rborist_dreaction[which_index], rpart = rpart_dreaction[which_index], qda = qda_dreaction[which_index], knn = knn_dreaction[which_index], test_set = test_set$dreaction[which_index])
 # A tibble: 2 × 5
-# rborist rpart qda   knn   test_set
-# <fct>   <fct> <fct> <fct> <fct>
+#   rborist rpart qda   knn   test_set
+#   <fct>   <fct> <fct> <fct> <fct>
 # 1 hi_tf   hi_tf li    li    li
 # 2 hi_tf   hi_tf li    li    li
 # the error cannot be improved with an ensemble
+
 
