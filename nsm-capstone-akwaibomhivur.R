@@ -1,4 +1,4 @@
-# MULTI-CLASS DISCRIMINATIVE CLASSIFICATION MODEL ON ANTIRETROVIRAL THERAPY REACTION AND FAILURE DEVELOPED ON THE UNIQUE RECORDS OF THE AKWA IBOM HIV DATABASE
+# MULTI-CLASS CLASSIFICATION MODEL ON ANTIRETROVIRAL THERAPY REACTION AND FAILURE DEVELOPED ON THE UNIQUE RECORDS OF THE AKWA IBOM HIV DATABASE
 # NICELLE SERNADILLA MACASPAC
 # AUGUST 2023
 # R VERSION: 4.3
@@ -77,7 +77,7 @@ sum(dataset$vhi_tf) +
 
 if(!require(tidyverse)) install.packages("tidyverse", repos = "http://cran.us.r-project.org")
 library(tidyverse)
-dataset1 <- dataset |>
+tdataset <- dataset |>
   mutate(brna = brna*10^2) |>
   mutate(frna = frna*10^2) |> # simplifies the unit from times 10^2 copies to just copies
   mutate(dreaction = case_when(vhi_tf == 1 ~ "vhi_tf",
@@ -86,14 +86,14 @@ dataset1 <- dataset |>
                               vli == 1 ~ "vli",
                               ni == 1 ~ "ni")) |> # relabels drug reactions as vhi_tf to ni and merges them under a newly defined dreaction column
   select(-vhi_tf, -hi_tf, -li, -vli, -ni)
-head(dataset1, n = 5)
+head(tdataset, n = 5)
 #   id sex bcd4 fcd4 brna frna bweight fweight     therapy response dreaction
 # 1  1   F  148  106  300  130      42      43 TDF+3TC+EFV 53.56199       li
 # 2  2   F  145  378  250  130      57      60 AZT+3TC+NVP 55.33422      vli
 # 3  3   M   78  131  410  170      70      75 AZT+3TC+NVP 50.00000    hi_tf
 # 4  4   M  295  574  440  190      64      66 AZT+3TC+NVP 50.00000       li
 # 5  5   F  397  792  190  130      52      55 AZT+3TC+NVP 76.00000       ni
-str(dataset1)
+str(tdataset)
 # 'data.frame':	1056 obs. of  11 variables:
 # $ id       : num  1 2 3 4 5 6 7 8 9 10 ...
 # $ sex      : chr  "F" "F" "M" "M" ...
@@ -112,12 +112,12 @@ str(dataset1)
 # we preprocess the tidy dataset
 
 options(digits = 3)
-dataset1a <- dataset1 |>
+tdataset1 <- tdataset |>
   mutate(sex = as.numeric(factor(sex))) |>
   mutate(therapy = as.numeric(factor(therapy))) |>
   mutate(dreaction = as.numeric(factor(dreaction, c("ni", "vli", "li", "hi_tf", "vhi_tf"))))
 
-summary(dataset1a)
+summary(tdataset1)
 #       id            sex            bcd4           fcd4           brna
 # Min.   :   1   Min.   :1.00   Min.   :   4   Min.   :  52   Min.   :120
 # 1st Qu.: 265   1st Qu.:1.00   1st Qu.: 238   1st Qu.: 423   1st Qu.:300
@@ -142,28 +142,28 @@ summary(dataset1a)
 
 if(!require(caret)) install.packages("caret", repos = "http://cran.us.r-project.org")
 library(caret)
-nearZeroVar(dataset1a)
+nearZeroVar(tdataset1)
 # integer(0)
 
 if(!require(corrplot)) install.packages("corrplot", repos = "http://cran.us.r-project.org")
 library(corrplot)
-corrplot(cor(dataset1a), method = "square", diag = FALSE, addCoef.col = "gray", tl.col = "black", number.cex = 0.5, number.digits = 2) # shows the correlation coefficients with 2 decimal digits across all variables
+corrplot(cor(tdataset1), method = "square", diag = FALSE, addCoef.col = "gray", tl.col = "black", number.cex = 0.5, number.digits = 2) # shows the correlation coefficients with 2 decimal digits across all variables
 # fig2 in the Rmd file
 # CD4 count is negatively correlated with drug reaction
 # RNA load is positively correlated with drug reaction
 # response is highly correlated with drug reaction as expected
 
-dataset2 <- dataset1 |>
+pdataset <- tdataset |>
   select(bcd4, fcd4, brna, frna, dreaction) |> # keeps CD4 count and RNA load as predictors and drug reaction as outcome
   mutate(dreaction = factor(dreaction, c("ni", "vli", "li", "hi_tf", "vhi_tf")))
-head(dataset2, n = 5)
+head(pdataset, n = 5)
 #   bcd4 fcd4 brna frna dreaction
 # 1  148  106  300  130        li
 # 2  145  378  250  130       vli
 # 3   78  131  410  170     hi_tf
 # 4  295  574  440  190        li
 # 5  397  792  190  130        ni
-str(dataset2)
+str(pdataset)
 # 'data.frame':	1056 obs. of  5 variables:
 # $ bcd4     : num  148 145 78 295 397 155 303 370 210 120 ...
 # $ fcd4     : num  106 378 131 574 792 280 679 615 242 278 ...
@@ -179,7 +179,7 @@ str(dataset2)
 
 # we visualize the predictors and outcome of the final dataset
 
-dataset2 |>
+pdataset |>
   ggplot(aes(brna, bcd4, color = dreaction)) +
   geom_point() +
   geom_smooth(color = "black", size = 0.5, method = "lm", se = FALSE) + # adds a trend line
@@ -188,7 +188,7 @@ dataset2 |>
   scale_color_discrete(name = "Drug Reaction", type = c("dodgerblue4", "green4", "yellow2", "orange3", "tomato4")) # fig3 in the Rmd file
 # there is a general increase in CD4 count at follow-up
 
-dataset2 |>
+pdataset |>
   ggplot(aes(frna, fcd4, color = dreaction)) +
   geom_point() +
   geom_smooth(color = "black", size = 0.5, method = "lm", se = FALSE) +
@@ -209,9 +209,9 @@ dataset2 |>
 set.seed(20, sample.kind = "Rounding") # if using R 3.6 or later
 # set.seed(20) # if using R 3.5 or earlier
 # for reproducibility during assessment
-train_index <- createDataPartition(dataset2$dreaction, p = 0.8, list = FALSE)
-train_set <- dataset2[train_index,]
-test_set <- dataset2[-train_index,]
+train_index <- createDataPartition(pdataset$dreaction, p = 0.8, list = FALSE)
+train_set <- pdataset[train_index,]
+test_set <- pdataset[-train_index,]
 
 
 
@@ -494,7 +494,7 @@ confusionMatrix(qda_dreaction, test_set$dreaction)
 
 
 
-# MULTI-CLASS DISCRIMINATIVE CLASSIFICATION MODEL
+# MULTI-CLASS CLASSIFICATION MODEL
 
 
 
@@ -511,9 +511,9 @@ ggplot(varImp(rborist_model)) +
 
 which_index <- c(which(rborist_dreaction != test_set$dreaction))
 # [1] 15 61
-tibble(rborist = rborist_dreaction[which_index], rpart = rpart_dreaction[which_index], qda = qda_dreaction[which_index], knn = knn_dreaction[which_index], test_set = test_set$dreaction[which_index])
+tibble(rborist = rborist_dreaction[which_index], rpart = rpart_dreaction[which_index], knn = knn_dreaction[which_index], qda = qda_dreaction[which_index], test_set = test_set$dreaction[which_index])
 # A tibble: 2 × 5
-#   rborist rpart qda   knn   test_set
+#   rborist rpart knn   qda   test_set
 #   <fct>   <fct> <fct> <fct> <fct>
 # 1 hi_tf   hi_tf li    li    li
 # 2 hi_tf   hi_tf li    li    li

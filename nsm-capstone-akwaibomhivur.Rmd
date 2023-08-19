@@ -1,5 +1,5 @@
 ---
-title: "Multi-class Discriminative Classification Model on Antiretroviral Therapy Reaction and Failure Developed on the Unique Records of the Akwa Ibom HIV Database"
+title: "Multi-class Classification Model on Antiretroviral Therapy Reaction and Failure Developed on the Unique Records of the Akwa Ibom HIV Database"
 author: "Nicelle Sernadilla Macaspac"
 date: "August 2023"
 output: pdf_document
@@ -73,7 +73,7 @@ colnames(dataset) <- c("id", "sex", "bcd4", "fcd4", "brna", "frna", "bweight", "
 head(dataset, n = 5)
 ```
 
-The brna and frna columns were multiplied by 10^2^ to simplify the unit from times 10^2^ copies to just copies. This aligns them with the unit used for viral RNA load in the WHO definition of HIV (World Health Organization, n.d.).
+The brna and frna columns were multiplied by 10^2^ to simplify the unit from times 10^2^ copies to just copies. This aligns them with the unit used for RNA load in the WHO definition of HIV (World Health Organization, n.d.).
 
 The vhi_tf, hi_tf, li, vli, and ni columns were verified to have only one value per row. Hence, the binary system was relabeled as vhi_tf to ni using the case_when function and merged under a newly defined dreaction column. This brought down the number of columns to eleven.
 
@@ -83,7 +83,7 @@ library(tidyverse)
 ```
 
 ```{r, echo = TRUE}
-dataset1 <- dataset |>
+tdataset <- dataset |>
   mutate(brna = brna*10^2) |>
   mutate(frna = frna*10^2) |> # simplifies the unit from times 10^2 copies to just copies
   mutate(dreaction = case_when(vhi_tf == 1 ~ "vhi_tf",
@@ -93,7 +93,7 @@ dataset1 <- dataset |>
                               ni == 1 ~ "ni")) |> # relabels drug reactions as 
   # vhi_tf to ni and merges them under a newly defined dreaction column
   select(-vhi_tf, -hi_tf, -li, -vli, -ni)
-head(dataset1, n = 5)
+head(tdataset, n = 5)
 ```
 
 
@@ -108,7 +108,7 @@ The correlation coefficients across variables were calculated and visualized usi
 
 ```{r}
 options(digits = 3)
-dataset1a <- dataset1 |>
+tdataset1 <- tdataset |>
   mutate(sex = as.numeric(factor(sex))) |>
   mutate(therapy = as.numeric(factor(therapy))) |>
   mutate(dreaction = as.numeric(factor(dreaction, c("ni", "vli", "li", "hi_tf", "vhi_tf"))))
@@ -117,42 +117,42 @@ dataset1a <- dataset1 |>
 ```{r fig2, fig.cap = "Matrix of the correlation coefficients between variables."}
 if(!require(corrplot)) install.packages("corrplot", repos = "http://cran.us.r-project.org")
 library(corrplot)
-corrplot(cor(dataset1a), method = "square", diag = FALSE, addCoef.col = "gray", tl.col = "black", number.cex = 0.5, number.digits = 2) # shows the correlation coefficients with 2 decimal digits across all variables
+corrplot(cor(tdataset1), method = "square", diag = FALSE, addCoef.col = "gray", tl.col = "black", number.cex = 0.5, number.digits = 2) # shows the correlation coefficients with 2 decimal digits across all variables
 ```
 
 Patient response and drug reaction highly correlated with each other, having an absolute coefficient of 74% (fig. 2). This was expected as they refer to similar information. Hence, only the dreaction variable was retained as an outcome for the purpose of this project.
 
-On the other hand, CD4 count was negatively correlated with drug reaction (-48% and -54%) whereas RNA load was positively correlated with it (41% and 55%), while having minimal correlation with each other (fig. 2). This meant that the bcd4, fcd4, brna and frna variables contained distinct information relevant to drug reaction and were kept as predictors.
+On the other hand, CD4 count was negatively correlated with drug reaction (-48% and -54%) whereas RNA load was positively correlated with it (41% and 55%), while having minimal correlation with each other (fig. 2). This indicated that the bcd4, fcd4, brna and frna variables contained distinct information relevant to drug reaction and were kept as predictors.
 
 The preprocessed dataset was streamlined to contain only these pertinent predictors and outcome for faster classification modeling. The dreaction variable was changed from character to factor class as required for outcomes in classification models.
 
 ```{r, echo = TRUE}
-dataset2 <- dataset1 |>
+pdataset <- tdataset |>
   select(bcd4, fcd4, brna, frna, dreaction) |> # keeps CD4 count and RNA load as 
   # predictors and drug reaction as outcome
   mutate(dreaction = factor(dreaction, c("ni", "vli", "li", "hi_tf", "vhi_tf")))
-head(dataset2, n = 5)
+head(pdataset, n = 5)
 ```
 
 
 ## Predictors and Outcome
 
 
-The predictors CD4 count and RNA load are measures of immune system health and HIV status, respectively (Ekpenyong, Etebong, and Jackson 2019, 10; World Health Organization, n.d.). They are crucial markers of drug reaction and treatment failure that can be obtained from simple laboratory tests in settings with limited resources for the costly HIV genotyping to determine drug resistance (Isaakidis et al. 2010, 7; Revell et al. 2010, 605).
+The predictors CD4 count and RNA load are measures of immune system health and HIV status, respectively (Ekpenyong, Etebong, and Jackson 2019, 10; World Health Organization, n.d.). They are crucial markers of drug reaction and treatment failure that can be obtained from simple laboratory tests in settings with limited resources for the costly HIV genotyping to determine drug resistance (Isaakidis et al. 2010, 7; Kitchen et al. 2001, 471; Revell et al. 2010, 605).
 
 The interactions of these predictors with drug reaction were further visualized using ggplot2 functions (fig. 3). The plots showed a general increase in CD4 count and decrease in RNA load at follow-up. This indicated the robustness of the immune system of most patients in suppressing the HIV and positive patient response to the treatment (Ekpenyong, Etebong, and Jackson 2019, 10).
 
 However, the plots also exhibited patients who retained a low CD4 count and high RNA load at follow-up (fig. 3). They were the same cases classified as with high drug interaction and treatment failure.
 
 ```{r fig3, out.width = "45%", fig.cap = "Scatterplots of CD4 count, RNA load, and the corresponding drug reaction at baseline and follow-up.", fig.show = "hold"}
-dataset2 |>
+pdataset |>
   ggplot(aes(brna, bcd4, color = dreaction)) +
   geom_point() +
   geom_smooth(color = "black", size = 0.5, method = "lm", se = FALSE) + # adds a trend line
   scale_x_continuous("Baseline RNA Load", limits = c(100, 700)) +
   scale_y_continuous("Baseline CD4 Count", limits = c(0, 2000)) + # encompasses the full range of the axes of baseline and follow-up data for ease of comparison
   scale_color_discrete(name = "Drug Reaction", type = c("dodgerblue4", "green4", "yellow2", "orange3", "tomato4"))
-dataset2 |>
+pdataset |>
   ggplot(aes(frna, fcd4, color = dreaction)) +
   geom_point() +
   geom_smooth(color = "black", size = 0.5, method = "lm", se = FALSE) +
@@ -176,9 +176,9 @@ library(caret)
 set.seed(20, sample.kind = "Rounding") # if using R 3.6 or later
 # set.seed(20) # if using R 3.5 or earlier
 # for reproducibility during assessment
-train_index <- createDataPartition(dataset2$dreaction, p = 0.8, list = FALSE)
-train_set <- dataset2[train_index,]
-test_set <- dataset2[-train_index,]
+train_index <- createDataPartition(pdataset$dreaction, p = 0.8, list = FALSE)
+train_set <- pdataset[train_index,]
+test_set <- pdataset[-train_index,]
 ```
 
 Classification models introduced in the program that can possibly accommodate the nonlinear nature of the decision boundaries of the outcome classes (similar to what was observed in fig. 3) were successively optimized on the train set with the train function (Haugh 2017, Irizarry 2002). We discuss them in the following subsections. The streamlined dataset allowed for the use of the default resampling method of the function that is bootstrapping for twenty-five times, which would have been time-consuming otherwise. Thereafter, the models were evaluated for the accuracy of their outcome prediction in the test set. The sensitivity or true positive rate and specificity or true negative rate of their prediction were also checked to rule out the effect of prevalence (Irizarry 2002).
@@ -189,7 +189,7 @@ Classification models introduced in the program that can possibly accommodate th
 
 The k-Nearest Neighbor Classification determines the class of a data point based on the majority class among its neighboring data points  (Haugh 2017). The number of neighbors k can be optimized to maximize the accuracy  (Irizarry 2002). In the train set, the optimal model was tuned at 3 neighbors, with an accuracy of 80.4%.
 
-Its predicted drug reaction was obtained using the predict function. This was compared with the observed drug reaction in the test set utilizing the confusionMatrix function, which resulted in an accuracy of 88%. The accuracy came with good sensitivity and specificity for most outcome classes, but the model had a low true positive detection rate for the class hi_tf.
+Its predicted drug reaction was obtained using the predict function. This was compared with the observed drug reaction in the test set utilizing the confusionMatrix function, which resulted in an accuracy of 88%. The accuracy came with good sensitivity and specificity for most outcome classes, but the model had a poor true positive detection rate for the class hi_tf.
 
 ```{r, echo = TRUE}
 set.seed(30, sample.kind = "Rounding") # if using R 3.6 or later
@@ -228,7 +228,7 @@ confusionMatrix(rpart_dreaction, test_set$dreaction)$byClass[, 1:2]
 ### _Rborist Model_
 
 
-The Rborist model improves on the prediction of the Recursive Partitioning and Regression Trees model using the average of multiple trees to classify a data point (Irizarry 2002). Its accuracy can be optimized through the number of predictors for data splitting and the minimum size of its terminal node. In the train set, the optimal model was tuned at 4 predictors and node size of 1, with an accuracy of 97.7%.
+The Rborist model improves on the prediction of the Recursive Partitioning and Regression Trees model using the average of multiple trees to classify a data point (Irizarry 2002). Its accuracy can be optimized through the number of predictors for data splitting and the size of its terminal node. In the train set, the optimal model was tuned at 4 predictors and terminal node size of 1, with an accuracy of 97.7%.
 
 Its predicted drug reaction had a test accuracy of 99%, higher than those from the first two models. The accuracy was supported by excellent sensitivity and specificity for all outcome classes.
 
@@ -254,9 +254,9 @@ confusionMatrix(rborist_dreaction, test_set$dreaction)$byClass[, 1:2]
 ### _Quadratic Discriminant Analysis_
 
 
-The Quadratic Discriminant Analysis classifies data points with flexible quadratic decision boundaries (Haugh 2017). Unlike the previous models, this does not have a parameter for tuning to maximize its accuracy. Accordingly, this model had the lowest training accuracy of 72.7%.
+The Quadratic Discriminant Analysis classifies data points with flexible decision boundaries derived from quadratic functions (Haugh 2017). Unlike the previous models, this does not have a parameter for tuning to maximize its accuracy. Accordingly, this model had the lowest training accuracy of 72.7%.
 
-The test accuracy of its outcome prediction was at 76.1%, lower than those from the preceding models. The accuracy was accompanied by good specificity, but the model had mediocre true positive detection rates for the classes li and hi_tf.
+The test accuracy of its outcome prediction was at 76.1%, lower than those from the preceding models. The accuracy was accompanied by good specificity, but the model had low to mediocre true positive detection rates for the classes vli, li and hi_tf.
 
 ```{r, echo = TRUE}
 set.seed(60, sample.kind = "Rounding") # if using R 3.6 or later
@@ -270,44 +270,12 @@ confusionMatrix(qda_dreaction, test_set$dreaction)$byClass[, 1:2]
 ```
 
 
-## Multi-class Discriminative Classification Model
+## Multi-class Classification Model
 
 
-- discriminatuve classification model  (Haugh 2017)
+The Rborist model proved to be the superior classification model in this project. It predicted antiretroviral therapy reaction and failure from baseline and follow-up CD4 count and RNA load using 4 predictors for data splitting and a terminal node size of 1: $Rborist(x, y, predFixed = 4, minNode = 1)$. Its test accuracy of 99% was backed by excellent sensitivity and specificity in detecting the five outcome classes. Additionally, this accuracy came from a lower training accuracy of 97.7%, signifying that the model was not overtrained.
 
-- Random Forest
-
-
-- results of model performances
-
--  the model with the best predictions on new data
-
-
-- therapy is not a predictor.
-
--it must be noted that, due to the limited resources in the Nigerian environment, only 5 drugs combined into 3 therapies were possible (Ekpenyong, Etebong, and Jackson 2019, 3)
-
-- not overtrained
-
-- Two RF models were trained using .8000 TCEs without the use of
-genotypes, one with comprehensive and one with simplified
-treatment history information. Both models predicted virological
-response for 400 independent test cases with an accuracy of
-82%. The models were able to identify alternative regimens
-(involving the same restricted range of drugs) that they predicted
-would have reduced viral load to below 50 copies/mL in almost
-half of the cases of actual treatment failure.11 They identified regimens that were predicted to be more effective than those that
-failed in almost all cases. A secondary analysis of the input variables used for these models revealed that the baseline viral load
-was by far the most important variable (considerably more so
-than CD4 counts, for example) for the models in making these
-predictions. These studies suggest that with viral load monitoring in place,
-computational models could play an important future role in
-optimizing antiretroviral therapy in resource-limited settings. (Revell et al. 2010, 606)
-
-- A disadvantage of random forests is that we lose interpretability.
-An approach that helps with interpretability is to examine variable importance. varImp function to know which  predictors are used the most (Irizarry 2002)
-
--  varImp and ggplot2 functions, The baseline RNA load is the most important predictor (fig. 4).
+The Rborist model averages multiple trees like the Random Forest machine learning algorithm it is based on. Unlike in the case of the simpler Recursive Partitioning and Regression Trees model, its "forest of trees" cannot be readily visualized and interpreted (Irizarry 2002). However, the varImp and ggplot functions were able to give an insight that the most important predictor utilized by the model was the baseline RNA load (fig. 4). The significance of baseline RNA load in predicting response to antiretroviral therapy has been observed in a previous study by Revell et al. (2010, 606) as well.
 
 ```{r fig4, fig.cap = "Bar chart of the variable importance of the Rborist model."}
 ggplot(varImp(rborist_model)) +
@@ -315,14 +283,14 @@ ggplot(varImp(rborist_model)) +
   scale_x_discrete("Predictor")
 ```
 
--ensemble, which and tibble functions
+The errors of the Rborist model were tabulated to additionally examine the possibility of the model being enhanced by ensembling it with the other models. However, this did not appear to be the best direction to take.
 
 ```{r, echo = TRUE}
 which_index <- c(which(rborist_dreaction != test_set$dreaction))
 # [1] 15 61
 tibble(rborist = rborist_dreaction[which_index], rpart = rpart_dreaction[which_index], 
-  qda = qda_dreaction[which_index], knn = knn_dreaction[which_index], 
-  test_set = test_set$dreaction[which_index])
+ knn = knn_dreaction[which_index], qda = qda_dreaction[which_index], 
+ test_set = test_set$dreaction[which_index])
 ```
 
 
@@ -351,6 +319,8 @@ Irizarry, Rafael A. 2002. _Introduction to Data Science: Data Analysis and Predi
 Isaakidis, Petros, Marie-Eve Raguenaud, Vantha Te, Chhraing S. Tray, Kazumi Akao, Varun Kumar, Sopheak Ngin, Eric Nerrienet, and Rony Zachariah. 2010. "High Survival and Treatment Success Sustained
 After Two and Three Years of First-line ART for
 Children in Cambodia." _Journal of the International AIDS Society_ 13: 11. [https://doi.org/10.1186/1758-2652-13-11](https://doi.org/10.1186/1758-2652-13-11).
+
+Kitchen, Christina M., Scott G. Kitchen, Jeffrey A. Dubin, and Michael S. Gottlieb. 2001. "Initial Virological and Immunologic Response to Highly Active Antiretroviral Therapy Predicts Long-term Clinical Outcome." _Clinical Infectious Diseases_ 33 (4): 466-472. [https://doi.org/10.1086/321900](https://doi.org/10.1086/321900).
 
 Kuhn, Max. 2019. "The caret Package." Last modified March 27, 2019. [https://topepo.github.io/caret/](https://topepo.github.io/caret/).
 
