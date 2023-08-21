@@ -27,7 +27,7 @@ HIV remains a major issue under the United Nations Sustainable Development Goals
 
 In resource-rich settings, detecting treatment failure through regular viral load monitoring and genotypic drug resistance testing allows for a timely change in therapy (Revell et al. 2010, 605). Periodic viral genotyping may not be as feasible though in resource-limited settings, such as in African countries where two-thirds of patients with HIV infection are from (World Health Organization 2023). In such cases, examining clinical outcomes for cost-effective markers of treatment failure is of value (Kitchen et al. 2001, 466).
 
-This project develops a machine-learning model that classifies and predicts antiretroviral therapy reaction and failure from a database of clinical outcomes of patients who received treatment for HIV infection in Akwa Ibom, Nigeria (Ekpenyong et al. 2021b, Appendix). In the succeeding sections, we examine the dataset, predictors, and outcome, then successively train and test possible classification models.
+This project develops a machine-learning model that classifies and predicts antiretroviral therapy reaction and failure from the clinical data of patients who received treatment for HIV infection in Akwa Ibom, Nigeria (Ekpenyong et al. 2021b, Appendix). In the succeeding sections, we examine the dataset, predictors, and outcome, then successively train and test possible classification models.
 
 This undertaking is part of the capstone in the [Professional Certificate Program in Data Science of Harvard Online](https://www.harvardonline.harvard.edu/course/data-science-professional-certificate). The corresponding R Markdown and R files are in the [GitHub of nsmacaspac](https://github.com/nsmacaspac/92capstone-project-idv-learners).
 
@@ -295,7 +295,7 @@ tibble(rborist = rborist_dreaction[which_index], rpart = rpart_dreaction[which_i
 ## Conclusion
 
 
-In this project, a multi-class Rborist classification model that predicted antiretroviral therapy reaction and failure from baseline and follow-up CD4 count and RNA load with an accuracy of 99% was developed on the Unique Records of the Akwa Ibom HIV Database. This machine-learning model allows for the early and cost-effective identification of patients who are in need of an immediate change in therapy, which is especially valuable in settings with limited resources for the costly HIV genotyping to determine drug resistance (Ekpenyong, Etebong, and Jackson 2019, 2; Isaakidis et al. 2010; Kitchen et al. 2001, 467).
+In this project, a multi-class Rborist classification model that predicted antiretroviral therapy reaction and failure from baseline and follow-up CD4 count and RNA load with an accuracy of 99% was developed on the Unique Records of the Akwa Ibom HIV Database. This machine-learning model enables the cost-effective and, consequently, prompt detection of patients who need a change in therapy, making it especially valuable in settings with limited resources for the costly HIV genotyping to determine drug resistance (Ekpenyong, Etebong, and Jackson 2019, 2; Isaakidis et al. 2010; Kitchen et al. 2001, 467).
 
 
 ## References
