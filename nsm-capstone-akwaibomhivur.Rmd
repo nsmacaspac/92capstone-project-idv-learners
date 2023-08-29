@@ -54,6 +54,7 @@ dataset <- as.data.frame(read_xlsx("mmc1.xlsx", range = "N27:AB1083")) # range r
 ```
 
 ```{r fig1, fig.cap = "First rows of the Unique Records table of the Akwa Ibom HIV Database."}
+if(!file.exists("fig1.png")) download.file("https://raw.githubusercontent.com/nsmacaspac/92capstone-project-idv-learners/main/fig1.png", "fig1.png")
 include_graphics("fig1.png")
 ```
 
