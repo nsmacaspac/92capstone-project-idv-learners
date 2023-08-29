@@ -75,7 +75,7 @@ head(dataset, n = 5)
 
 The brna and frna columns were multiplied by 10^2^ to simplify the unit from times 10^2^ copies to just copies. This aligns their unit with that used for RNA load in the WHO definition of HIV (World Health Organization, n.d.).
 
-The vhi_tf, hi_tf, li, vli, and ni columns were verified to have only one value per row. Hence, the binary system was relabeled as vhi_tf to ni using the case_when function and merged under a newly defined dreaction column. This brought down the number of columns to eleven.
+The vhi_tf, hi_tf, li, vli, and ni columns were verified to have only one value per row using the sum function. Hence, the binary system was relabeled as vhi_tf to ni with the case_when function and merged under a newly defined dreaction column. This brought down the number of columns to eleven.
 
 ```{r}
 if(!require(tidyverse)) install.packages("tidyverse", repos = "http://cran.us.r-project.org")
@@ -140,7 +140,7 @@ The predictors CD4 count and RNA load are measures of immune system health and H
 
 The interactions of these predictors with drug reaction were further visualized using ggplot2 functions (fig. 3). The plots showed a general increase in CD4 count and decrease in RNA load at follow-up. This indicated the robustness of the immune system of most patients in suppressing the HIV and positive patient response to the treatment (Ekpenyong, Etebong, and Jackson 2019, 10).
 
-However, the plots also exhibited patients who retained a low CD4 count and high RNA load at follow-up (fig. 3). They were the same cases classified as with high drug interaction and treatment failure.
+However, the plots also exhibited patients who retained a low CD4 count and high RNA load at follow-up (fig. 3). They were the same cases classified as with high to very high drug interaction and treatment failure.
 
 ```{r fig3, out.width = "45%", fig.cap = "Scatterplots of CD4 count, RNA load, and the corresponding drug reaction at baseline and follow-up.", fig.show = "hold"}
 pdataset |>
